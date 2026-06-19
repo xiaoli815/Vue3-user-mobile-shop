@@ -23,7 +23,7 @@ export interface SkuListItem {
   specs: { specName: string; specValue: string }[]
 }
 
- export interface skuProduct {
+export interface skuProduct {
   id?: number
   seckillId?: number
   name?: string
@@ -35,7 +35,14 @@ export interface SkuListItem {
   remainStock?: number
   limitCount?: number
   skus?: Sku[]
-  skuList?: { skuId: number; price?: number; seckillPrice?: number; stock?: number; remainStock?: number; specs: { specName: string; specValue: string }[] }[]
+  skuList?: {
+    skuId: number
+    price?: number
+    seckillPrice?: number
+    stock?: number
+    remainStock?: number
+    specs: { specName: string; specValue: string }[]
+  }[]
 }
 
 export interface Product {

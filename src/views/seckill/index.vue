@@ -5,11 +5,7 @@
       <div class="header-left">
         <span @click="router.back()">&lt;</span>
         <span class="seckill-title">限时秒杀</span>
-        <van-count-down
-          :time="remainingTime"
-          format="HH:mm:ss"
-          class="countdown"
-        >
+        <van-count-down :time="remainingTime" format="HH:mm:ss" class="countdown">
           <template #default="timeData">
             <span class="time-block">{{ timeData.hours }}</span>
             <span class="time-colon">:</span>
@@ -47,20 +43,14 @@
 
     <!-- 商品列表 -->
     <div class="product-list">
-      <div
-        v-for="i in SeckillList"
-        :key="i.seckillId"
-        class="product-item"
-      >
+      <div v-for="i in SeckillList" :key="i.seckillId" class="product-item">
         <div class="product-img-placeholder">
-          <img :src="i.image" alt="">
+          <img :src="i.image" alt="" />
         </div>
         <div class="product-info">
-          <p class="product-name">{{i.title}}</p>
+          <p class="product-name">{{ i.title }}</p>
           <div class="price-row">
-            <span class="current-price">
-              <span class="unit">¥</span>{{ i.seckillPrice }}
-            </span>
+            <span class="current-price"> <span class="unit">¥</span>{{ i.seckillPrice }} </span>
             <span class="original-price">￥{{ i.originalPrice }}</span>
           </div>
           <!-- 进度条 -->
@@ -93,14 +83,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref,onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { TimeSlot } from '@/types/seckill'
 import { getSeckillList } from '@/api/seckill'
 import { SeckillItem } from '@/types/seckill'
 
 const router = useRouter()
-
 
 const timeSlots = ref<TimeSlot[]>([
   { label: '08:00', hour: 8, status: 'ended' },
@@ -109,7 +98,6 @@ const timeSlots = ref<TimeSlot[]>([
   { label: '20:00', hour: 20, status: 'upcoming' }
 ])
 const activeSlotIndex = ref(2)
-const endTime = ref(Date.now() + 3600000)
 
 // 剩余时间（毫秒）
 const remainingTime = ref(3600000)
@@ -144,14 +132,14 @@ const fetchSeckillList = async () => {
 onMounted(() => {
   fetchSeckillList()
 })
-const goSeckillDetail=(id: number)=> {
+const goSeckillDetail = (id: number) => {
   router.push({
-  path: '/product/detail',
-  query: {
-    id: id,
-    type: 'seckill' 
-  }
-})
+    path: '/product/detail',
+    query: {
+      id: id,
+      type: 'seckill'
+    }
+  })
 }
 </script>
 

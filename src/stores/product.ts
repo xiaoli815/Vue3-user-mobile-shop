@@ -22,9 +22,7 @@ export const useProductStore = defineStore('product', () => {
   }
 
   // 判断是否收藏
-  const isFavorite = computed(() => (id: number) =>
-    favorites.value.some(f => f.id === id)
-  )
+  const isFavorite = computed(() => (id: number) => favorites.value.some(f => f.id === id))
 
   return {
     favorites,

@@ -10,10 +10,10 @@
     <van-loading v-if="cartStore.loading" class="loading" />
 
     <!-- 购物车列表 -->
-    <div class="cart-list" v-else-if="cartStore.items.length > 0">
-      <div class="cart-item" v-for="item in cartStore.items" :key="item.goodsId + '-' + item.skuId">
+    <div v-else-if="cartStore.items.length > 0" class="cart-list">
+      <div v-for="item in cartStore.items" :key="item.goodsId + '-' + item.skuId" class="cart-item">
         <!-- 商品复选框 -->
-        <van-checkbox class="cart-checkbox" v-model="item.checked" @change="onCheckChange" />
+        <van-checkbox v-model="item.checked" class="cart-checkbox" @change="onCheckChange" />
         <img v-if="item.image" :src="item.image" class="cart-img" />
         <div v-else class="cart-img-placeholder">商品图</div>
         <div class="cart-info">
@@ -29,19 +29,19 @@
     </div>
 
     <!-- 空状态 -->
-    <div class="cart-empty" v-else>
+    <div v-else class="cart-empty">
       <van-empty description="购物车空空如也" />
     </div>
 
     <!-- 底部结算栏 -->
-    <van-submit-bar 
+    <van-submit-bar
       v-if="cartStore.items.length > 0 && !cartStore.loading"
-      :price="cartStore.totalPrice * 100" 
-      button-text="去结算" 
+      :price="cartStore.totalPrice * 100"
+      button-text="去结算"
       safe-area-inset-bottom
       @submit="goCheckout"
     >
-    <!-- 全选按钮 -->
+      <!-- 全选按钮 -->
       <van-checkbox v-model="isAllChecked">全选</van-checkbox>
     </van-submit-bar>
   </div>
@@ -52,7 +52,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { showToast } from 'vant'
-import Tabbar from '@/components/tabbar.vue'
+import Tabbar from '@/components/Tabbar.vue'
 import { getProductDetail } from '@/api/product'
 import { getSeckillProductDetail } from '@/api/seckill'
 import type { CartItem } from '@/types/cart'
@@ -70,14 +70,10 @@ const toggleEdit = () => {
   isEdit.value = !isEdit.value
 }
 
-// 切换全选
-const toggleAll = () => {
-  cartStore.toggleAllCheck(!cartStore.isAllChecked)
-}
 // 全选状态
 const isAllChecked = computed({
   get: () => cartStore.isAllChecked,
-  set: (val) => {
+  set: val => {
     cartStore.toggleAllCheck(val)
   }
 })
@@ -104,10 +100,8 @@ const removeItem = (item: CartItem) => {
 
 // 去结算
 const goCheckout = () => {
-  const selectedIds = cartStore.checkedItems
-    .map(item => item.cartId)
-    .filter(id => id !== undefined)
-  
+  const selectedIds = cartStore.checkedItems.map(item => item.cartId).filter(id => id !== undefined)
+
   router.push({
     path: '/checkout',
     query: { cartIds: selectedIds.join(',') }
@@ -118,21 +112,23 @@ const goCheckout = () => {
 const addToCart = async (goodsId: number, skuId: number, count: number, type: string) => {
   try {
     let newItem: CartItem | null = null
-    
+
     if (type === 'seckill') {
       const res = await getSeckillProductDetail(goodsId)
-      
+
       if (res && res.seckillId) {
         let sku: SkuListItem | undefined
         if (skuId && res.skuList?.length) {
-          sku = res.skuList.find(s => s.skuId === Number(skuId) || (s as { id?: number }).id === Number(skuId))
+          sku = res.skuList.find(
+            s => s.skuId === Number(skuId) || (s as { id?: number }).id === Number(skuId)
+          )
         }
         if (!sku && res.skuList?.length) {
           sku = res.skuList[0]
         }
-        
+
         const specs = sku?.specs?.map(s => `${s.specName}: ${s.specValue}`).join(' / ') || ''
-        
+
         newItem = {
           cartId: Date.now(),
           goodsId: res.seckillId,
@@ -147,17 +143,19 @@ const addToCart = async (goodsId: number, skuId: number, count: number, type: st
       }
     } else {
       const res = await getProductDetail(goodsId)
-      
+
       if (res && res.id) {
         let sku: SkuListItem | undefined
         if (skuId && res.skuList?.length) {
-          sku = res.skuList.find(s => s.skuId === Number(skuId) || (s as { id?: number }).id === Number(skuId))
+          sku = res.skuList.find(
+            s => s.skuId === Number(skuId) || (s as { id?: number }).id === Number(skuId)
+          )
         }
         if (!sku && res.skuList?.length) {
           sku = res.skuList[0]
         }
         const specs = sku?.specs?.map(s => `${s.specName}: ${s.specValue}`).join(' / ') || ''
-        
+
         newItem = {
           cartId: Date.now(),
           goodsId: res.id,
@@ -171,12 +169,12 @@ const addToCart = async (goodsId: number, skuId: number, count: number, type: st
         }
       }
     }
-    
+
     if (newItem) {
       await cartStore.addToCart(newItem)
       showToast('添加购物车成功')
     }
-  } catch (error) {
+  } catch {
     showToast('添加购物车失败')
   }
 }
@@ -187,7 +185,7 @@ onMounted(() => {
   const skuId = route.query.skuId
   const count = route.query.count
   const type = route.query.type
-  
+
   if (goodsId) {
     addToCart(Number(goodsId), Number(skuId), Number(count) || 1, type as string)
   }

@@ -1,71 +1,113 @@
 <template>
-  <van-popup
-    v-model:show="visible"
-    position="bottom"
-    round
-    :style="{ height: '70%' }"
-  >
+  <van-popup v-model:show="visible" position="bottom" round :style="{ height: '70%' }">
     <div class="coupon-popup-header">
-      <h3 class="coupon-popup-title">优惠券</h3>
+      <h3 class="coupon-popup-title">选择优惠券</h3>
       <van-icon name="close" @click="handleClose" />
     </div>
+
     <div class="coupon-popup-content">
+      <!-- 已选优惠券提示 -->
+      <div v-if="autoSelectedDesc" class="auto-select-tip">
+        <van-icon name="discount" />
+        已自动选择最优优惠：{{ autoSelectedDesc }}
+      </div>
+
       <!-- 优惠券标签页 -->
       <div class="coupon-tabs">
-        <span :class="['tab', { active: couponTab === 'available' }]" @click="couponTab = 'available'">
+        <span
+          :class="['tab', { active: couponTab === 'available' }]"
+          @click="couponTab = 'available'"
+        >
           可用 ({{ availableCoupons.length }})
         </span>
-        <span :class="['tab', { active: couponTab === 'unavailable' }]" @click="couponTab = 'unavailable'">
+        <span
+          :class="['tab', { active: couponTab === 'unavailable' }]"
+          @click="couponTab = 'unavailable'"
+        >
           不可用 ({{ unavailableCoupons.length }})
         </span>
       </div>
-      
+
       <!-- 优惠券列表 -->
       <div class="coupon-list">
-        <div 
-          v-for="(coupon, index) in (couponTab === 'available' ? availableCoupons : unavailableCoupons)" 
+        <div
+          v-for="(coupon, index) in displayCoupons"
           :key="coupon.id"
-          :class="['coupon-item', { chosen: selectedIndex === index && couponTab === 'available' }]"
+          :class="[
+            'coupon-item',
+            { chosen: isSelected(coupon, index), disabled: couponTab === 'unavailable' }
+          ]"
           @click="handleCouponClick(coupon, index)"
         >
-          <view class="coupon-left">
-            <view class="coupon-amount">
-              <!-- 根据优惠券类型显示不同内容 -->
-              <text v-if="coupon.type === '折扣' && coupon.discount !== undefined" class="coupon-price">
-                {{ (coupon.discount / 10).toFixed(1) }}折
-              </text>
-              <text v-else-if="coupon.discount !== undefined" class="coupon-price">
-                <text class="coupon-currency">¥</text>
-                {{ coupon.discount / 100 }}
-              </text>
-            </view>
-            <view v-if="coupon.minOrderAmount !== undefined && coupon.minOrderAmount > 0" class="coupon-condition">
-              满{{ coupon.minOrderAmount / 100 }}元可用
-            </view>
-          </view>
-          <view class="coupon-right">
-            <view class="coupon-name">
-              {{ coupon.name }}
+          <!-- 左侧金额区 -->
+          <div class="coupon-left">
+            <div class="coupon-amount">
+              <template v-if="coupon.type === '折扣'">
+                <span class="coupon-price">{{ (coupon.value / 10).toFixed(1) }}</span>
+                <span class="coupon-unit">折</span>
+              </template>
+              <template v-else>
+                <span class="coupon-sign">¥</span>
+                <span class="coupon-price">{{ coupon.value }}</span>
+              </template>
+            </div>
+            <div v-if="coupon.minUseAmount > 0" class="coupon-condition">
+              满{{ coupon.minUseAmount }}元可用
+            </div>
+            <div v-else class="coupon-condition">无门槛</div>
+          </div>
+
+          <!-- 虚线分割 -->
+          <div class="coupon-divider"></div>
+
+          <!-- 右侧信息区 -->
+          <div class="coupon-right">
+            <div class="coupon-header">
+              <span class="coupon-name">{{ coupon.name }}</span>
               <span class="coupon-tag" :class="tagClass(coupon.category)">{{ coupon.category }}</span>
-            </view>
-            <view class="coupon-desc">{{ coupon.description }}</view>
-            <view class="coupon-apply" v-if="coupon.brandName">适用品牌：{{ coupon.brandName }}</view>
-            <view class="coupon-valid-date">
+            </div>
+            <div v-if="coupon.description" class="coupon-desc">{{ coupon.description }}</div>
+
+            <!-- 适用品牌 -->
+            <div v-if="coupon.brandName" class="coupon-apply">
+              <span class="apply-label">适用品牌：</span>
+              <span class="apply-value">{{ coupon.brandName }}</span>
+            </div>
+
+            <!-- 适用商品 -->
+            <div
+              v-if="coupon.productIds && coupon.productIds.length > 0 && !coupon.brandName"
+              class="coupon-apply"
+            >
+              <span class="apply-label">适用商品：</span>
+              <span class="apply-value">{{ coupon.productIds.length }}款指定商品</span>
+            </div>
+
+            <!-- 有效期 -->
+            <div class="coupon-valid-date">
               {{ formatDate(coupon.startAt) }} - {{ formatDate(coupon.endAt) }}
-            </view>
-          </view>
-          <view v-if="couponTab === 'available'" class="coupon-select">
-            <van-radio :value="index" v-model="selectedIndex" />
-          </view>
+            </div>
+
+            <!-- 不可用原因 -->
+            <div v-if="couponTab === 'unavailable'" class="coupon-unusable-reason">
+              {{ coupon.reason || getUnavailableReason(coupon) }}
+            </div>
+          </div>
+
+          <!-- 选择状态 -->
+          <div v-if="couponTab === 'available'" class="coupon-select">
+            <van-radio :model-value="isSelected(coupon, index)" />
+          </div>
         </div>
-        
+
         <!-- 空状态 -->
-        <van-empty 
-          v-if="(couponTab === 'available' ? availableCoupons : unavailableCoupons).length === 0" 
-          description="暂无优惠券" 
+        <van-empty
+          v-if="displayCoupons.length === 0"
+          :description="couponTab === 'available' ? '暂无可用的优惠券' : '暂无不可用的优惠券'"
         />
       </div>
     </div>
+
     <div class="coupon-popup-footer">
       <van-button type="primary" round block @click="handleClear">不使用优惠券</van-button>
     </div>
@@ -75,14 +117,16 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import type { Coupon } from '@/types/coupon'
+import { filterUsableCoupons, filterUnusableCoupons } from '@/utils/coupon'
 
 // Props 定义
 interface Props {
-  show: boolean           // 弹窗显示状态
-  coupons: Coupon[]       // 优惠券列表
-  selectedIndex: number   // 当前选中的优惠券索引
-  orderAmount?: number    // 订单金额（用于筛选可用优惠券）
-  productId?: number      // 当前商品ID（用于品牌券/店铺券的可用性判断）
+  show?: boolean
+  coupons?: Coupon[]
+  selectedIndex?: number
+  orderAmount?: number
+  /** 订单商品ID列表，用于校验品牌券/品类券/单品券的可用性 */
+  goodsIds?: number[]
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -90,56 +134,60 @@ const props = withDefaults(defineProps<Props>(), {
   coupons: () => [],
   selectedIndex: -1,
   orderAmount: 0,
-  productId: 0
+  goodsIds: () => []
 })
 
-// Emits 定义
+// Emits
 const emit = defineEmits<{
-  'update:show': [value: boolean]           // 更新弹窗显示状态
-  'select': [coupon: Coupon, index: number] // 选择优惠券
-  'clear': []                               // 清除选择
-  'close': []                               // 关闭弹窗
+  'update:show': [value: boolean]
+  select: [coupon: Coupon, index: number]
+  clear: []
+  close: []
 }>()
 
 // 内部状态
 const visible = computed({
   get: () => props.show,
-  set: (val) => emit('update:show', val)
+  set: val => emit('update:show', val)
 })
 
 const couponTab = ref<'available' | 'unavailable'>('available')
 const selectedIndex = ref(props.selectedIndex)
 
-// 监听外部 selectedIndex 变化
-watch(() => props.selectedIndex, (val) => {
-  selectedIndex.value = val
-})
+// 同步外部 selectedIndex
+watch(() => props.selectedIndex, val => { selectedIndex.value = val })
 
-// 品牌/商品匹配判断（品牌券仅针对特定品牌商品可用）
-const isBrandMatched = (coupon: Coupon): boolean => {
-  if (!props.productId) return true
-  if (!coupon.productIds || coupon.productIds.length === 0) return true
-  return coupon.productIds.includes(props.productId)
-}
-
-// 可用优惠券列表
+// 可用优惠券（Vant 兼容字段兜底 + 业务逻辑校验）
 const availableCoupons = computed(() => {
-  return props.coupons.filter((coupon) => {
-    return coupon.valid === true && 
-           (coupon.minOrderAmount === undefined || coupon.minOrderAmount <= props.orderAmount * 100) &&
-           isBrandMatched(coupon)
-  })
+  return filterUsableCoupons(props.coupons, props.orderAmount, props.goodsIds)
 })
 
-// 不可用优惠券列表
+// 不可用优惠券
 const unavailableCoupons = computed(() => {
-  return props.coupons.filter((coupon) => {
-    const isUnavailableByValidity = coupon.valid !== true ||
-           (coupon.minOrderAmount !== undefined && coupon.minOrderAmount > props.orderAmount * 100)
-    const isUnavailableByBrand = !isBrandMatched(coupon)
-    return isUnavailableByValidity || isUnavailableByBrand
-  })
+  return filterUnusableCoupons(props.coupons, props.orderAmount, props.goodsIds)
 })
+
+// 当前 tab 显示的券
+const displayCoupons = computed(() => {
+  return couponTab.value === 'available' ? availableCoupons.value : unavailableCoupons.value
+})
+
+// 自动选中描述
+const autoSelectedDesc = computed(() => {
+  const best = availableCoupons.value[0]
+  if (!best) return ''
+
+  if (best.type === '折扣') {
+    return `${best.name}（${(best.value / 10).toFixed(1)}折）`
+  }
+  return `${best.name}（减${best.value}元）`
+})
+
+// 判断是否选中
+const isSelected = (coupon: Coupon, index: number): boolean => {
+  if (couponTab.value !== 'available') return false
+  return selectedIndex.value === index
+}
 
 // 格式化日期
 const formatDate = (timestamp: number | undefined) => {
@@ -151,6 +199,17 @@ const formatDate = (timestamp: number | undefined) => {
   return `${year}-${month}-${day}`
 }
 
+// 获取不可用原因
+const getUnavailableReason = (coupon: Coupon): string => {
+  const now = Date.now()
+  if (now > coupon.endAt) return '已过期'
+  if (now < coupon.startAt) return '未生效'
+  if (props.orderAmount < coupon.minUseAmount) {
+    return `满${coupon.minUseAmount}元可用，还差${(coupon.minUseAmount - props.orderAmount).toFixed(2)}元`
+  }
+  return '当前商品不适用'
+}
+
 // 分类标签样式
 const tagClass = (category?: string) => {
   const map: Record<string, string> = {
@@ -160,13 +219,12 @@ const tagClass = (category?: string) => {
     '单品券': 'tag-product',
     '店铺券': 'tag-store'
   }
-  return map[category || ''] || ''
+  return map[category || ''] || 'tag-platform'
 }
 
 // 点击优惠券
 const handleCouponClick = (coupon: Coupon, index: number) => {
   if (couponTab.value !== 'available') return
-  
   selectedIndex.value = index
   emit('select', coupon, index)
 }
@@ -186,7 +244,6 @@ const handleClose = () => {
 </script>
 
 <style scoped>
-/* 优惠券弹窗样式 */
 .coupon-popup-header {
   display: flex;
   justify-content: space-between;
@@ -212,7 +269,20 @@ const handleClose = () => {
   border-top: 1px solid #eee;
 }
 
-/* 优惠券标签页 */
+/* 自动选择提示 */
+.auto-select-tip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+  background: linear-gradient(135deg, #fff3e0, #ffe0b2);
+  border-radius: 8px;
+  font-size: 13px;
+  color: #e65100;
+}
+
+/* 标签页 */
 .coupon-tabs {
   display: flex;
   border-bottom: 1px solid #eee;
@@ -226,10 +296,12 @@ const handleClose = () => {
   font-size: 14px;
   color: #999;
   position: relative;
+  cursor: pointer;
 }
 
 .coupon-tabs .tab.active {
   color: #ee0a24;
+  font-weight: bold;
 }
 
 .coupon-tabs .tab.active::after {
@@ -241,6 +313,7 @@ const handleClose = () => {
   width: 30px;
   height: 2px;
   background: #ee0a24;
+  border-radius: 1px;
 }
 
 /* 优惠券列表 */
@@ -250,45 +323,39 @@ const handleClose = () => {
   gap: 12px;
 }
 
-/* 优惠券项 */
 .coupon-item {
   display: flex;
-  position: relative;
-  background: linear-gradient(135deg, #ee0a24 0%, #ff4757 100%);
+  align-items: stretch;
+  border: 1px solid #eee;
   border-radius: 8px;
   overflow: hidden;
+  position: relative;
+  background: #fff;
+  cursor: pointer;
+  transition: all 0.2s;
 }
 
 .coupon-item.chosen {
-  border: 2px solid #ee0a24;
+  border-color: #ee0a24;
+  background: #fff5f5;
 }
 
-.coupon-item::after {
-  content: '';
-  position: absolute;
-  left: 120px;
-  top: 0;
-  bottom: 0;
-  width: 12px;
-  background: repeating-linear-gradient(
-    0deg,
-    #fff 0px,
-    #fff 4px,
-    transparent 4px,
-    transparent 8px
-  );
+.coupon-item.disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
-/* 优惠券左侧 */
+/* 左侧 */
 .coupon-left {
-  width: 120px;
-  padding: 16px 12px;
+  width: 100px;
+  min-width: 100px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  color: #fff;
-  background: rgba(255, 255, 255, 0.1);
+  padding: 16px 8px;
+  background: #fff;
+  border-right: 1px dashed #eee;
 }
 
 .coupon-amount {
@@ -296,78 +363,107 @@ const handleClose = () => {
   align-items: baseline;
 }
 
-.coupon-currency {
+.coupon-sign {
   font-size: 14px;
+  color: #ee0a24;
+  font-weight: bold;
 }
 
 .coupon-price {
   font-size: 28px;
+  color: #ee0a24;
   font-weight: bold;
+  line-height: 1;
+}
+
+.coupon-unit {
+  font-size: 14px;
+  color: #ee0a24;
+  font-weight: bold;
+  margin-left: 2px;
 }
 
 .coupon-condition {
+  margin-top: 6px;
   font-size: 12px;
-  margin-top: 4px;
-  opacity: 0.9;
+  color: #999;
 }
 
-/* 优惠券右侧 */
+/* 虚线分割 */
+.coupon-divider {
+  width: 0;
+}
+
+/* 右侧 */
 .coupon-right {
   flex: 1;
-  padding: 16px;
-  background: #fff;
+  padding: 12px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
 }
 
-.coupon-name {
-  font-size: 14px;
-  font-weight: bold;
-  color: #333;
+.coupon-header {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.coupon-name {
+  font-size: 15px;
+  font-weight: bold;
+  color: #333;
 }
 
 .coupon-tag {
-  flex-shrink: 0;
   font-size: 10px;
   padding: 1px 5px;
-  border-radius: 2px;
-  font-weight: 500;
-  line-height: 16px;
+  border-radius: 3px;
+  white-space: nowrap;
 }
 
-.tag-platform { background: #e8f4fd; color: #1989fa; }
-.tag-category { background: #fff3e0; color: #ff9800; }
-.tag-brand { background: #f3e5f5; color: #9c27b0; }
-.tag-product { background: #e8f5e9; color: #4caf50; }
-.tag-store { background: #fff8e1; color: #ff8f00; }
-
-.coupon-apply {
-  font-size: 11px;
-  color: #ee0a24;
-  margin-top: 4px;
-}
+.tag-platform { background: #e3f2fd; color: #1565c0; }
+.tag-category { background: #e8f5e9; color: #2e7d32; }
+.tag-brand { background: #fce4ec; color: #c62828; }
+.tag-product { background: #fff3e0; color: #e65100; }
+.tag-store { background: #f3e5f5; color: #6a1b9a; }
 
 .coupon-desc {
   font-size: 12px;
   color: #999;
-  margin-top: 4px;
+  margin-bottom: 4px;
+}
+
+.coupon-apply {
+  font-size: 12px;
+  color: #666;
+  margin-bottom: 4px;
+}
+
+.apply-label {
+  color: #999;
+}
+
+.apply-value {
+  color: #ee0a24;
 }
 
 .coupon-valid-date {
   font-size: 11px;
-  color: #999;
-  margin-top: 8px;
+  color: #bbb;
 }
 
-/* 优惠券选择按钮 */
+.coupon-unusable-reason {
+  font-size: 11px;
+  color: #ff6b6b;
+  margin-top: 4px;
+}
+
+/* 选择按钮 */
 .coupon-select {
-  position: absolute;
-  right: 12px;
-  top: 50%;
-  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
 }
 </style>

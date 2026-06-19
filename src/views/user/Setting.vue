@@ -51,7 +51,7 @@
       <van-cell-group :border="false">
         <van-cell title="通用设置" is-link icon="setting-o" />
         <van-cell title="检查更新" is-link icon="upgrade" value="v1.0.0" />
-        <van-cell title="清理缓存" is-link icon="delete-o" @click="clearCache" value="12.5MB" />
+        <van-cell title="清理缓存" is-link icon="delete-o" value="12.5MB" @click="clearCache" />
         <van-cell title="关于优选商城" is-link icon="info-o" />
       </van-cell-group>
     </div>

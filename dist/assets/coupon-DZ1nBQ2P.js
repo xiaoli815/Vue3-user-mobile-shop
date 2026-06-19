@@ -1,0 +1,1 @@
+import{r as t}from"./request-CbO1UOoD.js";const o=()=>t.get("/coupons/list").then(t=>t.data),s=o=>t.post("/coupons/collect",{id:o}).then(t=>t.data),a=o=>t.get(`/coupons/product/${o}`).then(t=>t.data);export{o as a,s as c,a as g};

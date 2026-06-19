@@ -14,7 +14,9 @@ export interface AddToCartParams {
 
 // 获取购物车列表
 export const getCart = (): Promise<CartItem[]> => {
-  return request.get<CartListResponse>('/cart').then(res => res.data) as unknown as Promise<CartItem[]>
+  return request.get<CartListResponse>('/cart').then(res => res.data) as unknown as Promise<
+    CartItem[]
+  >
 }
 
 // 加入购物车

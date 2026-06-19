@@ -12,7 +12,14 @@
         <div class="logo-icon">
           <svg viewBox="0 0 48 48" width="48" height="48">
             <rect x="4" y="12" width="40" height="28" rx="6" fill="#165DFF" />
-            <path d="M16 22 L22 28 L32 18" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+            <path
+              d="M16 22 L22 28 L32 18"
+              stroke="#fff"
+              stroke-width="3"
+              fill="none"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
           </svg>
         </div>
         <h1 class="app-name">创建账号</h1>
@@ -24,7 +31,14 @@
         <!-- 手机号 -->
         <div class="input-group" :class="{ focused: activeField === 'phone' }">
           <span class="input-icon">
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+            <svg
+              viewBox="0 0 24 24"
+              width="20"
+              height="20"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
               <rect x="5" y="2" width="14" height="20" rx="2" />
               <line x1="12" y1="18" x2="12.01" y2="18" />
             </svg>
@@ -43,7 +57,14 @@
         <!-- 验证码 -->
         <div class="input-group" :class="{ focused: activeField === 'code' }">
           <span class="input-icon">
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+            <svg
+              viewBox="0 0 24 24"
+              width="20"
+              height="20"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
               <rect x="3" y="11" width="18" height="11" rx="2" />
               <path d="M7 11V7a5 5 0 0 1 10 0v4" />
             </svg>
@@ -57,11 +78,7 @@
             @focus="activeField = 'code'"
             @blur="activeField = ''"
           />
-          <button
-            class="code-btn"
-            :disabled="codeCountdown > 0"
-            @click="sendCode"
-          >
+          <button class="code-btn" :disabled="codeCountdown > 0" @click="sendCode">
             {{ codeCountdown > 0 ? `${codeCountdown}s` : '获取验证码' }}
           </button>
         </div>
@@ -69,7 +86,14 @@
         <!-- 密码 -->
         <div class="input-group" :class="{ focused: activeField === 'password' }">
           <span class="input-icon">
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+            <svg
+              viewBox="0 0 24 24"
+              width="20"
+              height="20"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
               <rect x="3" y="11" width="18" height="11" rx="2" />
               <path d="M7 11V7a5 5 0 0 1 10 0v4" />
             </svg>
@@ -84,12 +108,30 @@
             @blur="activeField = ''"
           />
           <span class="eye-icon" @click="showPassword = !showPassword">
-            <svg v-if="showPassword" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+            <svg
+              v-if="showPassword"
+              viewBox="0 0 24 24"
+              width="18"
+              height="18"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
               <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
               <circle cx="12" cy="12" r="3" />
             </svg>
-            <svg v-else viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" />
+            <svg
+              v-else
+              viewBox="0 0 24 24"
+              width="18"
+              height="18"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path
+                d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"
+              />
               <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" />
               <line x1="1" y1="1" x2="23" y2="23" />
             </svg>
@@ -99,7 +141,14 @@
         <!-- 确认密码 -->
         <div class="input-group" :class="{ focused: activeField === 'confirmPwd' }">
           <span class="input-icon">
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+            <svg
+              viewBox="0 0 24 24"
+              width="20"
+              height="20"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
               <rect x="3" y="11" width="18" height="11" rx="2" />
               <path d="M7 11V7a5 5 0 0 1 10 0v4" />
             </svg>
@@ -114,12 +163,30 @@
             @blur="activeField = ''"
           />
           <span class="eye-icon" @click="showConfirmPwd = !showConfirmPwd">
-            <svg v-if="showConfirmPwd" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+            <svg
+              v-if="showConfirmPwd"
+              viewBox="0 0 24 24"
+              width="18"
+              height="18"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
               <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
               <circle cx="12" cy="12" r="3" />
             </svg>
-            <svg v-else viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" />
+            <svg
+              v-else
+              viewBox="0 0 24 24"
+              width="18"
+              height="18"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path
+                d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"
+              />
               <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" />
               <line x1="1" y1="1" x2="23" y2="23" />
             </svg>
@@ -162,13 +229,17 @@
         <div class="social-icons">
           <div class="social-item wechat">
             <svg viewBox="0 0 24 24" width="26" height="26" fill="#09BB07">
-              <path d="M8.5 11a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm-7.97 3.17A7.5 7.5 0 0 1 12 6c3.7 0 6.8 2.61 7.43 6H22c0-5.52-4.48-10-10-10S2 6.48 2 12c0 1.8.47 3.5 1.3 4.97L2 22l5.5-1.5c.77.32 1.62.5 2.5.5 1.24 0 2.4-.3 3.47-.83A7.5 7.5 0 0 1 5.53 14.17z" />
+              <path
+                d="M8.5 11a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm-7.97 3.17A7.5 7.5 0 0 1 12 6c3.7 0 6.8 2.61 7.43 6H22c0-5.52-4.48-10-10-10S2 6.48 2 12c0 1.8.47 3.5 1.3 4.97L2 22l5.5-1.5c.77.32 1.62.5 2.5.5 1.24 0 2.4-.3 3.47-.83A7.5 7.5 0 0 1 5.53 14.17z"
+              />
             </svg>
             <span>微信</span>
           </div>
           <div class="social-item qq">
             <svg viewBox="0 0 24 24" width="26" height="26" fill="#12B7F5">
-              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.5 14c-1.5 0-2.5-1-3-2 0 0-1 .5-2 .5s-2-.5-2-.5c-.5 1-1.5 2-3 2-1.5 0-2.5-1-2.5-2.5 0-.5.5-1.5 1-2 0 0-.5-1.5.5-3 1-1.5 3-2 4-2s3 .5 4 2c1 1.5.5 3 .5 3 .5.5 1 1.5 1 2 0 1.5-1 2.5-2.5 2.5z" />
+              <path
+                d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.5 14c-1.5 0-2.5-1-3-2 0 0-1 .5-2 .5s-2-.5-2-.5c-.5 1-1.5 2-3 2-1.5 0-2.5-1-2.5-2.5 0-.5.5-1.5 1-2 0 0-.5-1.5.5-3 1-1.5 3-2 4-2s3 .5 4 2c1 1.5.5 3 .5 3 .5.5 1 1.5 1 2 0 1.5-1 2.5-2.5 2.5z"
+              />
             </svg>
             <span>QQ</span>
           </div>
@@ -279,7 +350,7 @@ const handleRegister = () => {
   position: absolute;
   border-radius: 50%;
   opacity: 0.15;
-  background: #165DFF;
+  background: #165dff;
   pointer-events: none;
 }
 
@@ -359,7 +430,7 @@ const handleRegister = () => {
 }
 
 .input-group.focused {
-  border-color: #165DFF;
+  border-color: #165dff;
   background: #fff;
   box-shadow: 0 0 0 3px rgba(22, 93, 255, 0.1);
 }
@@ -374,7 +445,7 @@ const handleRegister = () => {
 }
 
 .input-group.focused .input-icon {
-  color: #165DFF;
+  color: #165dff;
 }
 
 .input-field {
@@ -398,7 +469,7 @@ const handleRegister = () => {
   padding: 0 12px;
   border: none;
   border-radius: 8px;
-  background: #165DFF;
+  background: #165dff;
   color: #fff;
   font-size: 12px;
   white-space: nowrap;
@@ -426,7 +497,7 @@ const handleRegister = () => {
 }
 
 .eye-icon:hover {
-  color: #165DFF;
+  color: #165dff;
 }
 
 /* ===== 协议勾选 ===== */
@@ -460,12 +531,12 @@ const handleRegister = () => {
 }
 
 .checkbox.checked {
-  border-color: #165DFF;
+  border-color: #165dff;
   background: rgba(22, 93, 255, 0.08);
 }
 
 .link {
-  color: #165DFF;
+  color: #165dff;
   text-decoration: none;
 }
 
@@ -479,7 +550,7 @@ const handleRegister = () => {
   height: 48px;
   border: none;
   border-radius: 12px;
-  background: linear-gradient(135deg, #165DFF 0%, #3c7cff 100%);
+  background: linear-gradient(135deg, #165dff 0%, #3c7cff 100%);
   color: #fff;
   font-size: 16px;
   font-weight: 600;
@@ -508,7 +579,7 @@ const handleRegister = () => {
 }
 
 .login-link a {
-  color: #165DFF;
+  color: #165dff;
   text-decoration: none;
   font-weight: 500;
 }

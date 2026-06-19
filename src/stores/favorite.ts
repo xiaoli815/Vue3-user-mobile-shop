@@ -27,20 +27,20 @@ function saveFavorites(data: Record<string, Product[]>) {
 export const useFavoriteStore = defineStore('favorite', () => {
   const userStore = useUserStore()
   const favoriteList = ref<Product[]>([])
-  
+
   // 根据当前用户获取对应的收藏数据 key
   const getUserKey = (): string => {
     const userId = userStore.userId || 'guest'
     return `user_${userId}`
   }
-  
+
   // 从 localStorage 加载当前用户的收藏数据
   const loadUserFavorites = () => {
     const allFavorites = loadFavorites()
     const userKey = getUserKey()
     favoriteList.value = allFavorites[userKey] || []
   }
-  
+
   // 保存当前用户的收藏数据到 localStorage
   const saveUserFavorites = () => {
     const allFavorites = loadFavorites()
@@ -48,7 +48,7 @@ export const useFavoriteStore = defineStore('favorite', () => {
     allFavorites[userKey] = [...favoriteList.value]
     saveFavorites(allFavorites)
   }
-  
+
   // 监听用户变化，重新加载对应用户的收藏数据
   watch(
     () => userStore.userId,
@@ -57,7 +57,7 @@ export const useFavoriteStore = defineStore('favorite', () => {
     },
     { immediate: true }
   )
-  
+
   // 监听 favoriteList 变化，自动保存
   watch(
     favoriteList,
@@ -66,14 +66,14 @@ export const useFavoriteStore = defineStore('favorite', () => {
     },
     { deep: true }
   )
-  
+
   // 添加收藏
   const addFavorite = (product: Product) => {
     if (!favoriteList.value.some(item => item.id === product.id)) {
       favoriteList.value.push({ ...product, isFavorite: true })
     }
   }
-  
+
   // 移除收藏
   const removeFavorite = (productId: number) => {
     const index = favoriteList.value.findIndex(item => item.id === productId)
@@ -81,7 +81,7 @@ export const useFavoriteStore = defineStore('favorite', () => {
       favoriteList.value.splice(index, 1)
     }
   }
-  
+
   // 切换收藏状态
   const toggleFavorite = (product: Product): boolean => {
     const index = favoriteList.value.findIndex(item => item.id === product.id)
@@ -95,17 +95,17 @@ export const useFavoriteStore = defineStore('favorite', () => {
       return true
     }
   }
-  
+
   // 检查商品是否已收藏
   const isFavorite = (productId: number): boolean => {
     return favoriteList.value.some(item => item.id === productId)
   }
-  
+
   // 获取收藏数量
   const getCount = (): number => {
     return favoriteList.value.length
   }
-  
+
   // 清空所有收藏
   const clearAll = () => {
     favoriteList.value = []

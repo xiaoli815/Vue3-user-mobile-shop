@@ -1,0 +1,1 @@
+import{r as a}from"./request-CbO1UOoD.js";const e=()=>a.get("/category/list").then(a=>a.data),t=e=>a.get("/category/goods",{params:e}).then(a=>a.data);function r(e){return a.get("/search/suggestions",{params:{keyword:e}})}function s(e,t=1,r=20){return a.get("/search/products",{params:{keyword:e,page:t,pageSize:r}})}export{r as a,t as b,e as g,s};

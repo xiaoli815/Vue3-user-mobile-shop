@@ -20,11 +20,13 @@ const cartCount = computed(() => cartStore.totalCount || '')
 
 // 根据路由同步tabbar
 const tabRoutes = ['/home', '/product/list', '/cart', '/user']
-watch(() => route.path, (path) => {
-  const idx = tabRoutes.indexOf(path)
-  if (idx > -1) active.value = idx
-}, { immediate: true })
+watch(
+  () => route.path,
+  path => {
+    const idx = tabRoutes.indexOf(path)
+    if (idx > -1) active.value = idx
+  },
+  { immediate: true }
+)
 </script>
-<style scoped>
-
-</style>
+<style scoped></style>

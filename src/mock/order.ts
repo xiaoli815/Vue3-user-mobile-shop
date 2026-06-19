@@ -8,7 +8,7 @@ let orderIdCounter = 1
 
 // 订单预览（确认下单前）
 Mock.mock('/api/order/pre', 'post', (options: any) => {
-  const { cartIds, addressId } = JSON.parse(options.body)
+  const { cartIds } = JSON.parse(options.body)
 
   // 从 localStorage 获取购物车数据（支持带用户标识的key）
   let goodsList: any[] = []
@@ -28,7 +28,7 @@ Mock.mock('/api/order/pre', 'post', (options: any) => {
     }
     if (cartData) {
       const cartItems = JSON.parse(cartData)
-      
+
       // 如果传入了 cartIds，筛选对应的商品
       if (cartIds && cartIds.length > 0) {
         goodsList = cartItems
@@ -65,7 +65,8 @@ Mock.mock('/api/order/pre', 'post', (options: any) => {
   const freightPrice = 0
 
   return {
-    code: 200, msg: 'success',
+    code: 200,
+    msg: 'success',
     data: {
       totalOriginalPrice,
       discountPrice,
@@ -90,8 +91,20 @@ Mock.mock('/api/order/submit', 'post', (options: any) => {
     createTime: now,
     finalPrice: 10898,
     goodsList: [
-      { name: 'iPhone 15 Pro Max', image: '/images/product/phone/product1.jpg', price: 8999, count: 1, specText: '曜石黑 / M' },
-      { name: 'AirPods Pro 2', image: '/images/product/phone/product13.jpg', price: 1899, count: 1, specText: '白色 / 标准版' }
+      {
+        name: 'iPhone 15 Pro Max',
+        image: '/images/product/phone/product1.jpg',
+        price: 8999,
+        count: 1,
+        specText: '曜石黑 / M'
+      },
+      {
+        name: 'AirPods Pro 2',
+        image: '/images/product/phone/product13.jpg',
+        price: 1899,
+        count: 1,
+        specText: '白色 / 标准版'
+      }
     ],
     addressId,
     couponId,
@@ -125,7 +138,8 @@ Mock.mock('/api/order/list', 'get', (options: any) => {
   list = list.slice(start, start + pageSize)
 
   return {
-    code: 200, msg: 'success',
+    code: 200,
+    msg: 'success',
     data: { list, total, page, pageSize }
   }
 })

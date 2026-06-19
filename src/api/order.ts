@@ -8,6 +8,10 @@ export interface PreOrderParams {
   goodsId?: number
   skuId?: number
   count?: number
+  items?: { goodsId?: number; skuId?: number; count?: number }[]
+  couponIds?: number[]
+  remark?: string
+  finalPrice?: number
 }
 
 export interface SubmitOrderParams {
@@ -24,16 +28,16 @@ export const getOrderList = (status?: string) =>
 
 // 订单预览（确认下单前）
 export const preOrder = (data: PreOrderParams): Promise<Order | null> =>
-  request.post<OrderDetailResponse>('/order/pre', data).then(res => res.data) as unknown as Promise<Order | null>
+  request
+    .post<OrderDetailResponse>('/order/pre', data)
+    .then(res => res.data) as unknown as Promise<Order | null>
 
 // 提交订单
 export const submitOrder = (data: SubmitOrderParams) =>
   request.post<OrderResponse>('/order/submit', data).then(res => res.data)
 
 // 取消订单
-export const cancelOrder = (id: number) =>
-  request.post(`/order/cancel`, { orderid: id })
+export const cancelOrder = (id: number) => request.post(`/order/cancel`, { orderid: id })
 
 // 确认收货
-export const confirmReceipt = (id: number) =>
-  request.post(`/order/confirm`, { orderid: id })
+export const confirmReceipt = (id: number) => request.post(`/order/confirm`, { orderid: id })

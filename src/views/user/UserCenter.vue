@@ -10,14 +10,14 @@
     <div class="order-section card">
       <div class="section-title">
         <span>我的订单</span>
-        <span class="all-orders" @click="toOrderList">全部订单 <van-icon name="arrow" /></span>
+        <span class="all-orders" @click="toOrderList()">全部订单 <van-icon name="arrow" /></span>
       </div>
       <van-grid :column-num="5" :border="false">
-        <van-grid-item icon="balance-o" text="待付款" />
-        <van-grid-item icon="logistics" text="待发货" />
-        <van-grid-item icon="send-gift-o" text="待收货" />
-        <van-grid-item icon="comment-o" text="待评价" />
-        <van-grid-item icon="after-sale" text="售后" />
+        <van-grid-item icon="balance-o" text="待付款" @click="toOrderList('pending_pay')" />
+        <van-grid-item icon="logistics" text="待发货" @click="toOrderList('paid')" />
+        <van-grid-item icon="send-gift-o" text="待收货" @click="toOrderList('shipped')" />
+        <van-grid-item icon="comment-o" text="待评价" @click="toOrderList('completed')" />
+        <van-grid-item icon="after-sale" text="售后" @click="toOrderList('refund')" />
       </van-grid>
     </div>
 
@@ -42,10 +42,10 @@
 </template>
 
 <script setup lang="ts">
-import Tabbar from '@/components/tabbar.vue'
+import Tabbar from '@/components/Tabbar.vue'
 import { useRouter } from 'vue-router'
-import { getUserInfo, } from '@/api/login'
-import { onMounted,ref } from 'vue'
+import { getUserInfo } from '@/api/login'
+import { onMounted, ref } from 'vue'
 import { showToast } from 'vant'
 
 const router = useRouter()
@@ -56,8 +56,12 @@ const toSetting = () => {
 const goCoupon = () => {
   router.push('/coupon')
 }
-const toOrderList = () => {
-  router.push('/orders')
+const toOrderList = (status?: string) => {
+  if (status) {
+    router.push({ path: '/orders', query: { status } })
+  } else {
+    router.push('/orders')
+  }
 }
 const toLogin = () => {
   router.push('/login')
@@ -68,16 +72,14 @@ const toFavorite = () => {
 // 用户登录信息的获取
 const userInfo = ref<{ id?: number; nickname?: string; avatar?: string; phone?: string }>({})
 onMounted(async () => {
-  const res=await getUserInfo()
+  const res = await getUserInfo()
   console.log(res)
   if (res.code === 200) {
-    userInfo.value=res.data
-  }else{
+    userInfo.value = res.data
+  } else {
     showToast(res.msg || '获取用户信息失败')
   }
-
-  })
-
+})
 </script>
 
 <style scoped>
@@ -100,7 +102,9 @@ onMounted(async () => {
   font-weight: bold;
 }
 
-.order-section, .func-section, .menu-section {
+.order-section,
+.func-section,
+.menu-section {
   margin-top: 8px;
 }
 

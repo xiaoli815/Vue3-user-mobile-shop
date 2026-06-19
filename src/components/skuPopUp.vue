@@ -18,19 +18,15 @@
             <span class="price-value">{{ finalPrice }}</span>
             <span v-if="discountPrice > 0" class="price-discount">已优惠 ¥{{ discountPrice }}</span>
           </p>
-          <p class="sku-stock" v-if="selectedSku">
-            库存：{{ selectedSku.stock }}件
-          </p>
-          <p class="sku-selected" v-if="selectedSpecText">
-            已选：{{ selectedSpecText }}
-          </p>
+          <p v-if="selectedSku" class="sku-stock">库存：{{ selectedSku.stock }}件</p>
+          <p v-if="selectedSpecText" class="sku-selected">已选：{{ selectedSpecText }}</p>
         </div>
         <van-icon name="close" class="close-btn" @click="onClose" />
       </div>
 
       <!-- 规格选择 -->
       <div class="sku-body">
-        <div class="spec-group" v-for="group in specGroups" :key="group.name">
+        <div v-for="group in specGroups" :key="group.name" class="spec-group">
           <p class="spec-group-name">{{ group.name }}</p>
           <div class="spec-tags">
             <span
@@ -62,26 +58,25 @@
             <van-icon
               name="plus"
               class="qty-btn"
-              :class="{ disabled: selectedSku && quantity >= (isSeckill ? Math.min(limitCount, selectedSku.stock) : selectedSku.stock) }"
+              :class="{
+                disabled:
+                  selectedSku &&
+                  quantity >=
+                    (isSeckill ? Math.min(limitCount, selectedSku.stock) : selectedSku.stock)
+              }"
               @click="onIncrease"
             />
           </div>
         </div>
         <!-- 限购提示 -->
-        <div class="limit-tip" v-if="isSeckill">
+        <div v-if="isSeckill" class="limit-tip">
           <span class="limit-text">限购 {{ limitCount }} 件</span>
         </div>
       </div>
 
       <!-- 确认按钮 -->
       <div class="sku-footer">
-        <van-button
-          type="danger"
-          round
-          block
-          :disabled="!selectedSku"
-          @click="onConfirm"
-        >
+        <van-button type="danger" round block :disabled="!selectedSku" @click="onConfirm">
           {{ confirmText }}
         </van-button>
       </div>
@@ -91,18 +86,21 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import type { Sku} from '@/types/index'
+import type { Sku } from '@/types/index'
 
 import type { skuProduct } from '@/types/product'
 
-const props = withDefaults(defineProps<{
-  modelValue: boolean
-  product: skuProduct
-  confirmText?: string
-  discountPrice?: number
-}>(), {
-  discountPrice: 0
-})
+const props = withDefaults(
+  defineProps<{
+    modelValue: boolean
+    product: skuProduct
+    confirmText: string
+    discountPrice?: number
+  }>(),
+  {
+    discountPrice: 0
+  }
+)
 
 // confirmText 的默认值
 const confirmText = computed(() => {
@@ -110,14 +108,14 @@ const confirmText = computed(() => {
 })
 
 const emit = defineEmits<{
-  (e: 'update:modelValue', val: boolean): void
-  (e: 'confirm', data: { sku: Sku; quantity: number }): void
+  (_: 'update:modelValue', __: boolean): void
+  (_: 'confirm', __: { sku: Sku; quantity: number }): void
 }>()
 
 // 使用计算属性处理 v-model
 const visible = computed({
   get: () => props.modelValue,
-  set: (val) => emit('update:modelValue', val)
+  set: val => emit('update:modelValue', val)
 })
 
 // 获取 SKU 列表（兼容普通商品和秒杀商品数据格式）
@@ -170,14 +168,17 @@ const selectedSku = computed(() => {
   const selected = selectedSpecs.value
   const keys = Object.keys(selected)
   if (keys.length === 0) return null
-  return skuList.value.find(sku => {
-    return sku.specs.every(spec => selected[spec.name] === spec.value)
-  }) || null
+  return (
+    skuList.value.find(sku => {
+      return sku.specs.every(spec => selected[spec.name] === spec.value)
+    }) || null
+  )
 })
 
 // 计算最终价格（原价 - 优惠金额）
 const finalPrice = computed(() => {
-  const originalPrice = selectedSku.value?.price || props.product.price || props.product.seckillPrice || 0
+  const originalPrice =
+    selectedSku.value?.price || props.product.price || props.product.seckillPrice || 0
   return Math.max(originalPrice - props.discountPrice, 0)
 })
 
@@ -235,12 +236,15 @@ function onConfirm() {
 }
 
 // 弹窗打开时重置
-watch(() => props.modelValue, (val) => {
-  if (val) {
-    selectedSpecs.value = {}
-    quantity.value = 1
+watch(
+  () => props.modelValue,
+  val => {
+    if (val) {
+      selectedSpecs.value = {}
+      quantity.value = 1
+    }
   }
-})
+)
 </script>
 
 <style scoped>

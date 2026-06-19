@@ -32,5 +32,11 @@ export const calculateTotalPrice = (
   priceKey: string = 'price',
   countKey: string = 'count'
 ): number => {
-  return items.reduce((sum, item) => sum + (item[priceKey as keyof typeof item] as number || 0) * (item[countKey as keyof typeof item] as number || 1), 0)
+  return items.reduce(
+    (sum, item) =>
+      sum +
+      ((item[priceKey as keyof typeof item] as number) || 0) *
+        ((item[countKey as keyof typeof item] as number) || 1),
+    0
+  )
 }

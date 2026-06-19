@@ -1,6 +1,6 @@
 <template>
   <div class="refund-page">
-    <van-nav-bar title="申请退款" left-arrow @click-left="$router.back()" fixed placeholder />
+    <van-nav-bar title="申请退款" left-arrow fixed placeholder @click-left="$router.back()" />
 
     <div class="refund-content">
       <!-- 订单信息 -->
@@ -22,12 +22,9 @@
       <div class="card">
         <h3>退款原因</h3>
         <van-radio-group v-model="refundReason" class="reason-group">
-          <van-radio
-            v-for="reason in reasons"
-            :key="reason"
-            :name="reason"
-            class="reason-item"
-          >{{ reason }}</van-radio>
+          <van-radio v-for="reason in reasons" :key="reason" :name="reason" class="reason-item">{{
+            reason
+          }}</van-radio>
         </van-radio-group>
       </div>
 
@@ -35,7 +32,7 @@
       <div class="card">
         <div class="amount-row">
           <span>退款金额</span>
-          <span class="price" style="font-size:18px">¥99.00</span>
+          <span class="price" style="font-size: 18px">¥99.00</span>
         </div>
       </div>
 
@@ -54,18 +51,12 @@
       <!-- 上传凭证 -->
       <div class="card">
         <h3>上传凭证</h3>
-        <van-uploader
-          v-model="uploadFiles"
-          :max-count="3"
-          :max-size="5 * 1024 * 1024"
-        />
+        <van-uploader v-model="uploadFiles" :max-count="3" :max-size="5 * 1024 * 1024" />
       </div>
 
       <!-- 提交按钮 -->
       <div class="submit-area">
-        <van-button type="danger" block round @click="submitRefund">
-          提交申请
-        </van-button>
+        <van-button type="danger" block round @click="submitRefund"> 提交申请 </van-button>
       </div>
     </div>
   </div>

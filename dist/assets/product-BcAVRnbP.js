@@ -1,1 +1,0 @@
-import{r as a}from"./request-CQeUNXCj.js";const o=t=>a.get("/products",{params:{keyword:t}}),s=t=>a.get("/goods/detail/",{params:{goodsId:t}}).then(r=>r.data),d=t=>a.post(`/products/${t}/favorite`).then(r=>r.data);export{s as a,o as g,d as t};

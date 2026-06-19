@@ -1,1 +1,0 @@
-const o=(r,e)=>{try{sessionStorage.setItem(r,JSON.stringify(e))}catch(s){console.error("sessionStorage 存储失败:",s)}},t=r=>{try{const e=sessionStorage.getItem(r);return e?JSON.parse(e):null}catch(e){return console.error("sessionStorage 读取失败:",e),null}},n=r=>{try{sessionStorage.removeItem(r)}catch(e){console.error("sessionStorage 删除失败:",e)}};export{t as g,n as r,o as s};

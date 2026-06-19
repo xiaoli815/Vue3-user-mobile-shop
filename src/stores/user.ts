@@ -1,15 +1,16 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
+import { getToken, setToken as saveToken, removeToken } from '@/utils/token'
 
 export const useUserStore = defineStore('user', () => {
   const token = ref<string>('')
   const userId = ref<number>(0)
   const isLoggedIn = computed(() => !!token.value)
 
-  // 从 localStorage 恢复 token
+  // 从 localStorage 恢复 token（使用加密存储工具）
   function loadToken() {
     try {
-      const savedToken = localStorage.getItem('token')
+      const savedToken = getToken()
       const savedUserId = localStorage.getItem('user_id')
       if (savedToken) {
         token.value = savedToken
@@ -17,22 +18,24 @@ export const useUserStore = defineStore('user', () => {
       if (savedUserId) {
         userId.value = Number(savedUserId)
       }
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }
 
-  // 保存 token 和 userId
+  // 保存 token 和 userId（使用加密存储工具）
   function setToken(newToken: string, newUserId: number = 0) {
     token.value = newToken
     userId.value = newUserId
-    localStorage.setItem('token', newToken)
+    saveToken(newToken)
     localStorage.setItem('user_id', String(newUserId))
   }
 
-  // 清除 token 和 userId
+  // 清除 token 和 userId（使用加密存储工具）
   function clearToken() {
     token.value = ''
     userId.value = 0
-    localStorage.removeItem('token')
+    removeToken()
     localStorage.removeItem('user_id')
   }
 

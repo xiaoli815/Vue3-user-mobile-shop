@@ -3,23 +3,20 @@ import vue from '@vitejs/plugin-vue'
 import AutoImport from 'unplugin-auto-import/vite'
 import Components from 'unplugin-vue-components/vite'
 import { VantResolver } from 'unplugin-vue-components/resolvers'
-import { ElementPlusResolver } from 'unplugin-vue-components/resolvers'
+
+import { fileURLToPath } from 'url'
 import { resolve } from 'path'
+
+const __dirname = fileURLToPath(new URL('.', import.meta.url))
 
 export default defineConfig({
   plugins: [
     vue(),
     AutoImport({
-      resolvers: [
-        VantResolver(),
-        ElementPlusResolver()
-      ]
+      resolvers: [VantResolver()]
     }),
     Components({
-      resolvers: [
-        VantResolver(),
-        ElementPlusResolver()
-      ]
+      resolvers: [VantResolver()]
     })
   ],
   resolve: {
@@ -30,5 +27,16 @@ export default defineConfig({
   server: {
     port: 3000,
     open: true
+  },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vant: ['vant'],
+          axios: ['axios'],
+          mock: ['mockjs']
+        }
+      }
+    }
   }
 })

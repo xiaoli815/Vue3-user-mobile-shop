@@ -62,7 +62,7 @@ const seckillList = flashProducts.map((p: any, i: number) => {
 
 // 生成秒杀详情（含 SKU）
 const seckillDetailMap: Record<number, any> = {}
-seckillList.forEach((seckill) => {
+seckillList.forEach(seckill => {
   const product = productList.find((p: any) => p.id === seckill.goodsId) || productList[0]
   const skuList = (product.skus || []).map((sku: any, j: number) => ({
     skuId: sku.id,

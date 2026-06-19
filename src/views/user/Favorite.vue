@@ -4,8 +4,13 @@
     <van-nav-bar title="我的收藏" left-arrow @click-left="$router.back()" />
 
     <!-- 收藏列表 -->
-    <ul class="favorite-list" v-if="favoriteList.length > 0">
-      <li class="favorite-item" v-for="item in favoriteList" :key="item.id" @click="goDetail(item.id)">
+    <ul v-if="favoriteList.length > 0" class="favorite-list">
+      <li
+        v-for="item in favoriteList"
+        :key="item.id"
+        class="favorite-item"
+        @click="goDetail(item.id)"
+      >
         <!-- 商品图片 -->
         <div class="item-image">
           <img :src="item.image" :alt="item.name" />
@@ -18,7 +23,7 @@
           </p>
           <p class="item-price-row">
             <span class="item-price">¥{{ item.price }}</span>
-            <span class="item-original" v-if="item.originalPrice">¥{{ item.originalPrice }}</span>
+            <span v-if="item.originalPrice" class="item-original">¥{{ item.originalPrice }}</span>
           </p>
           <p class="item-sales">已售 {{ item.sales }}</p>
         </div>
@@ -30,7 +35,7 @@
     </ul>
 
     <!-- 空状态 -->
-    <van-empty description="暂无收藏商品" v-else />
+    <van-empty v-else description="暂无收藏商品" />
 
     <!-- 底部导航 -->
     <Tabbar />
@@ -38,11 +43,9 @@
 </template>
 
 <script setup lang="ts">
-import { } from 'vue'
 import { useRouter } from 'vue-router'
-import Tabbar from '@/components/tabbar.vue'
+import Tabbar from '@/components/Tabbar.vue'
 import { useFavoriteStore } from '@/stores/favorite'
-import {Product} from '@/types/product'
 
 const router = useRouter()
 const favoriteStore = useFavoriteStore()
@@ -59,8 +62,6 @@ const goDetail = (id: number) => {
 const removeFavorite = (id: number) => {
   favoriteStore.removeFavorite(id)
 }
-
-
 </script>
 
 <style scoped>

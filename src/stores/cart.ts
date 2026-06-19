@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
+import {ref, computed } from 'vue'
 import type { CartItem } from '@/types/cart'
 import { useUserStore } from './user'
 import { getCart, addToCart as apiAddToCart, clearCart as apiClearCart } from '@/api/cart'
@@ -22,7 +22,9 @@ export const useCartStore = defineStore('cart', () => {
       if (data) {
         items.value = JSON.parse(data) as CartItem[]
       }
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }
 
   // 保存到localStorage
@@ -54,22 +56,16 @@ export const useCartStore = defineStore('cart', () => {
   loadFromServer()
 
   // 计算属性
-  const totalCount = computed(() =>
-    items.value.reduce((sum, item) => sum + item.count, 0)
-  )
-// 被选中的商品
-  const checkedItems = computed(() =>
-    items.value.filter(item => item.checked)
-  )
+  const totalCount = computed(() => items.value.reduce((sum, item) => sum + item.count, 0))
+  // 被选中的商品
+  const checkedItems = computed(() => items.value.filter(item => item.checked))
 
   const totalPrice = computed(() =>
-    checkedItems.value.reduce((sum, item) =>
-      sum + item.price * item.count, 0
-    )
+    checkedItems.value.reduce((sum, item) => sum + item.price * item.count, 0)
   )
-// 是否全选
-  const isAllChecked = computed(() =>
-    items.value.length > 0 && items.value.every(item => item.checked)
+  // 是否全选
+  const isAllChecked = computed(
+    () => items.value.length > 0 && items.value.every(item => item.checked)
   )
 
   // 添加到购物车
@@ -86,7 +82,7 @@ export const useCartStore = defineStore('cart', () => {
         price: item.price,
         specText: item.specText
       })
-      
+
       // 更新本地状态
       const exist = items.value.find(i => i.skuId === item.skuId && i.goodsId === item.goodsId)
       if (exist) {
@@ -103,7 +99,7 @@ export const useCartStore = defineStore('cart', () => {
     }
   }
 
-  // 更新数量 
+  // 更新数量
   function updateCount(cartId: number, count: number) {
     const item = items.value.find(i => i.cartId === cartId)
     if (item) {
@@ -121,13 +117,13 @@ export const useCartStore = defineStore('cart', () => {
     }
   }
 
-  // 删除选中的商品 
+  // 删除选中的商品
   function removeChecked() {
     items.value = items.value.filter(item => !item.checked)
     saveToStorage()
   }
 
-  // 切换选中状态 
+  // 切换选中状态
   function toggleCheck(cartId: number) {
     const item = items.value.find(i => i.cartId === cartId)
     if (item) {
@@ -156,7 +152,7 @@ export const useCartStore = defineStore('cart', () => {
       const ids = checkedItems.value.map(item => String(item.cartId))
       // 调用后端 API 清空已结算的商品
       await apiClearCart(ids)
-      
+
       // 更新本地状态
       items.value = items.value.filter(item => !item.checked)
       saveToStorage()

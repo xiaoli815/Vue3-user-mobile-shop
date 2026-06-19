@@ -1,6 +1,6 @@
 <template>
   <div class="coupon-center">
-    <van-nav-bar title="优惠券中心" left-arrow @click-left="$router.back()" fixed placeholder />
+    <van-nav-bar title="优惠券中心" left-arrow fixed placeholder @click-left="$router.back()" />
 
     <!-- 分类 Tab -->
     <van-tabs v-model:active="activeTab" sticky offset-top="46" @change="onTabChange">
@@ -11,7 +11,7 @@
     <van-loading v-if="loading" class="loading" />
 
     <!-- 优惠券列表 -->
-    <div class="coupon-list" v-else-if="filteredCoupons.length > 0">
+    <div v-else-if="filteredCoupons.length > 0" class="coupon-list">
       <div
         v-for="coupon in filteredCoupons"
         :key="coupon.id"
@@ -29,10 +29,10 @@
               <span class="coupon-price">{{ Math.floor(coupon.discount! / 100) }}</span>
             </template>
           </div>
-          <div class="coupon-condition" v-if="coupon.minOrderAmount && coupon.minOrderAmount > 0">
+          <div v-if="coupon.minOrderAmount && coupon.minOrderAmount > 0" class="coupon-condition">
             满{{ coupon.minOrderAmount / 100 }}元可用
           </div>
-          <div class="coupon-condition" v-else>无门槛</div>
+          <div v-else class="coupon-condition">无门槛</div>
         </div>
 
         <!-- 虚线分割 -->
@@ -46,14 +46,17 @@
               {{ coupon.category }}
             </span>
           </div>
-          <div class="coupon-desc" v-if="coupon.description">{{ coupon.description }}</div>
+          <div v-if="coupon.description" class="coupon-desc">{{ coupon.description }}</div>
 
           <!-- 适用商品信息 -->
-          <div class="coupon-apply" v-if="coupon.brandName">
+          <div v-if="coupon.brandName" class="coupon-apply">
             <span class="apply-label">适用品牌：</span>
             <span class="apply-value">{{ coupon.brandName }}</span>
           </div>
-          <div class="coupon-apply" v-if="coupon.productIds && coupon.productIds.length > 0 && !coupon.brandName">
+          <div
+            v-if="coupon.productIds && coupon.productIds.length > 0 && !coupon.brandName"
+            class="coupon-apply"
+          >
             <span class="apply-label">适用商品：</span>
             <span class="apply-value">{{ coupon.productIds.length }}款指定商品</span>
           </div>
@@ -63,33 +66,13 @@
               {{ formatDate(coupon.startAt) }} - {{ formatDate(coupon.endAt) }}
             </span>
             <!-- 操作按钮 -->
-            <van-button
-              v-if="coupon.collected"
-              size="small"
-              round
-              plain
-              disabled
-              type="default"
-            >
+            <van-button v-if="coupon.collected" size="small" round plain disabled type="default">
               已领取
             </van-button>
-            <van-button
-              v-else-if="!coupon.valid"
-              size="small"
-              round
-              plain
-              disabled
-              type="default"
-            >
+            <van-button v-else-if="!coupon.valid" size="small" round plain disabled type="default">
               已过期
             </van-button>
-            <van-button
-              v-else
-              size="small"
-              round
-              type="danger"
-              @click.stop="handleCollect(coupon)"
-            >
+            <van-button v-else size="small" round type="danger" @click.stop="handleCollect(coupon)">
               立即领取
             </van-button>
           </div>
@@ -98,7 +81,7 @@
     </div>
 
     <!-- 空状态 -->
-    <div class="coupon-empty" v-else-if="!loading">
+    <div v-else-if="!loading" class="coupon-empty">
       <van-empty :description="emptyText" />
     </div>
 
@@ -109,7 +92,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { showToast, showLoadingToast, closeToast } from 'vant'
-import Tabbar from '@/components/tabbar.vue'
+import Tabbar from '@/components/Tabbar.vue'
 import { getCouponList, collectCoupon } from '@/api/coupon'
 import type { Coupon, CouponCategory } from '@/types/coupon'
 
@@ -149,11 +132,11 @@ const emptyText = computed(() => {
 // 优惠券分类样式
 const categoryClass = (category?: CouponCategory) => {
   const map: Record<string, string> = {
-    '平台券': 'tag-platform',
-    '品类券': 'tag-category',
-    '品牌券': 'tag-brand',
-    '单品券': 'tag-product',
-    '店铺券': 'tag-store'
+    平台券: 'tag-platform',
+    品类券: 'tag-category',
+    品牌券: 'tag-brand',
+    单品券: 'tag-product',
+    店铺券: 'tag-store'
   }
   return map[category || ''] || 'tag-platform'
 }
@@ -176,7 +159,7 @@ const fetchCoupons = async () => {
   loading.value = true
   try {
     const res: any = await getCouponList()
-    coupons.value = Array.isArray(res) ? res : (res?.data || [])
+    coupons.value = Array.isArray(res) ? res : res?.data || []
   } catch {
     showToast('获取优惠券失败')
   } finally {

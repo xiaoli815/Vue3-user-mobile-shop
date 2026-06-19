@@ -1,46 +1,46 @@
 <template>
   <div class="product-detail-page">
     <!-- 顶部导航 -->
-    <van-nav-bar
-      title="商品详情"
-      left-arrow
-      @click-left="$router.back()"
-      fixed
-      placeholder
-    >
-    <!-- 收藏 -->
+    <van-nav-bar title="商品详情" left-arrow fixed placeholder @click-left="$router.back()">
+      <!-- 收藏 -->
       <template #right>
-        <van-icon 
+        <van-icon
           :name="isFavorite ? 'like' : 'like-o'"
-          size="20" 
+          size="20"
           :color="isFavorite ? '#ee0a24' : '#999'"
           @click="getFavorite"
-          
         />
       </template>
     </van-nav-bar>
 
     <!-- 商品图片轮播 -->
     <van-swipe :autoplay="3000" indicator-color="#ee0a24" class="detail-swipe">
-      <van-swipe-item v-for="i in productDetail?.mainImages || seckillProductDetail?.mainImages || []" :key="i">
+      <van-swipe-item
+        v-for="i in productDetail?.mainImages || seckillProductDetail?.mainImages || []"
+        :key="i"
+      >
         <div class="image-placeholder">
-          <span> <img :src="i" alt=""></span>
+          <span> <img :src="i" alt="" /></span>
         </div>
       </van-swipe-item>
     </van-swipe>
 
     <!-- 秒杀条 -->
-    <div class="seckill-bar" v-if="route.query.type === 'seckill'">
-      <div class="seckill-left" >
+    <div v-if="route.query.type === 'seckill'" class="seckill-bar">
+      <div class="seckill-left">
         <div class="price-drop">
           <span class="label">秒杀价</span>
           <span class="currency">¥</span>
-          <span class="amount">{{seckillProductDetail?.seckillPrice || 0}}</span>
-          <span class="tag">共优惠{{(seckillProductDetail?.originalPrice || 0) - (seckillProductDetail?.seckillPrice || 0)}}</span>
+          <span class="amount">{{ seckillProductDetail?.seckillPrice || 0 }}</span>
+          <span class="tag"
+            >共优惠{{
+              (seckillProductDetail?.originalPrice || 0) - (seckillProductDetail?.seckillPrice || 0)
+            }}</span
+          >
         </div>
         <div class="sold-info">
           <span class="sold-label">已抢</span>
-          <span class="sold-count">{{seckillProductDetail?.soldCount || 0}}</span>
+          <span class="sold-count">{{ seckillProductDetail?.soldCount || 0 }}</span>
           <span class="sold-unit">件</span>
         </div>
       </div>
@@ -53,20 +53,22 @@
     <!-- 价格信息 -->
     <div class="price-section card">
       <div class="price-row">
-        <span class="price" style="font-size:24px">{{productDetail?.price || seckillProductDetail?.seckillPrice || 0}}</span>
-        <span class="original-price">¥{{productDetail?.originalPrice || seckillProductDetail?.originalPrice || 0}}</span>
+        <span class="price" style="font-size: 24px">{{
+          productDetail?.price || seckillProductDetail?.seckillPrice || 0
+        }}</span>
+        <span class="original-price"
+          >¥{{ productDetail?.originalPrice || seckillProductDetail?.originalPrice || 0 }}</span
+        >
       </div>
-      <h2 class="product-name">{{productDetail?.name || seckillProductDetail?.title || ''}}</h2>
+      <h2 class="product-name">{{ productDetail?.name || seckillProductDetail?.title || '' }}</h2>
       <div class="product-desc">
-        {{productDetail?.description || seckillProductDetail?.description || '暂无商品描述'}}
+        {{ productDetail?.description || seckillProductDetail?.description || '暂无商品描述' }}
       </div>
       <div class="info-tags">
-        <span>库存 {{productDetail?.stock || seckillProductDetail?.remainStock || 0}}</span>
-        <span>已售 {{productDetail?.salesCount || seckillProductDetail?.soldCount || 0}}</span>
+        <span>库存 {{ productDetail?.stock || seckillProductDetail?.remainStock || 0 }}</span>
+        <span>已售 {{ productDetail?.salesCount || seckillProductDetail?.soldCount || 0 }}</span>
       </div>
     </div>
-
-    
 
     <!-- 规格选择 -->
     <div class="spec-bar card">
@@ -88,9 +90,7 @@
     <!-- 优惠券入口 -->
     <div class="coupon-tip card" @click="handleCouponClick">
       <van-icon name="coupon-o" color="#ee0a24" />
-      <span v-if="selectedCoupon">
-        已选优惠券：¥{{ discountedPrice }}
-      </span>
+      <span v-if="selectedCoupon"> 已选优惠券：¥{{ discountedPrice }} </span>
       <span v-else>店铺领券享优惠</span>
       <van-icon name="arrow" />
     </div>
@@ -101,7 +101,7 @@
       :coupons="couponList"
       :selected-index="selectedCouponIndex"
       :order-amount="productDetail?.price || seckillProductDetail?.seckillPrice || 0"
-      :product-id="id"
+      :goods-ids="[id]"
       @select="onCouponSelect"
       @clear="onCouponClear"
     />
@@ -109,13 +109,18 @@
     <!-- 商品详情 -->
     <div class="detail-content card">
       <h3>商品详情</h3>
-      <p>{{productDetail?.description || seckillProductDetail?.description || '暂无商品描述'}}</p>
+      <p>{{ productDetail?.description || seckillProductDetail?.description || '暂无商品描述' }}</p>
     </div>
 
     <!-- 底部操作栏 -->
     <van-action-bar safe-area-inset-bottom>
       <van-action-bar-icon icon="chat-o" text="客服" />
-      <van-action-bar-icon icon="cart-o" text="购物车" :badge="cartStore.items.length" @click="$router.push('/cart')" />
+      <van-action-bar-icon
+        icon="cart-o"
+        text="购物车"
+        :badge="cartStore.items.length"
+        @click="$router.push('/cart')"
+      />
       <van-action-bar-icon icon="like-o" text="收藏" />
       <van-action-bar-button type="warning" text="加入购物车" @click="handleAddCart" />
       <van-action-bar-button type="danger" text="立即购买" @click="handleDirectBuy" />
@@ -130,8 +135,8 @@ import { toggleFavorite as apiToggleFavorite, getProductDetail } from '@/api/pro
 import { getSeckillProductDetail } from '@/api/seckill'
 import type { SeckillItem } from '@/types/seckill'
 import { useRoute, useRouter } from 'vue-router'
-import type { Product, Sku, SpecItem, SkuListItem } from '@/types/index'
-import SkuPopUp from '@/components/skuPopUp.vue'
+import type { Product, Sku, SpecItem } from '@/types/index'
+import SkuPopUp from '@/components/SkuPopUp.vue'
 import CouponPopUp from '@/components/CouponPopUp.vue'
 import { useUserStore } from '@/stores/user'
 import { useFavoriteStore } from '@/stores/favorite'
@@ -145,7 +150,7 @@ import { setSessionStorage, removeSessionStorage } from '@/utils/storage'
 const router = useRouter()
 const showSpec = ref(false)
 const route = useRoute()
-const id = Number(route.query.id)  
+const id = Number(route.query.id)
 const productDetail = ref<Product>()
 const seckillProductDetail = ref<SeckillItem>()
 const selectedSpecText = ref('')
@@ -160,27 +165,27 @@ const selectedCoupon = ref<Coupon | null>(null) // 选中的优惠券
 const text = ref('立即购买')
 
 // 收藏
-const isFavorite=ref<boolean>(false)
-const getFavorite=async()=>{
+const isFavorite = ref<boolean>(false)
+const getFavorite = async () => {
   if (!productDetail.value) {
     showToast('商品信息未加载')
     return
   }
-  
+
   // 调用后端接口
   await apiToggleFavorite(productDetail.value.id)
-  
+
   // 更新 store（会自动持久化到 localStorage）
   const newState = favoriteStore.toggleFavorite(productDetail.value)
   isFavorite.value = newState
-  
+
   showToast(newState ? '收藏成功' : '取消收藏成功')
 }
 
 // 计算优惠价格
 const discountedPrice = computed(() => {
   if (!selectedCoupon.value) return 0
-  
+
   const originalPrice = productDetail.value?.price || seckillProductDetail.value?.seckillPrice || 0
   return calculateCouponDiscount(selectedCoupon.value, originalPrice)
 })
@@ -207,25 +212,24 @@ const onCouponSelect = async (coupon: Coupon, index: number) => {
     if (!coupon.collected) {
       const res: any = await collectCoupon(coupon.id)
       console.log('领取优惠券结果:', res)
-      
+
       // 更新优惠券为已领取状态
-      const couponIndex = couponList.value.findIndex((c) => c.id === coupon.id)
+      const couponIndex = couponList.value.findIndex(c => c.id === coupon.id)
       if (couponIndex !== -1) {
         couponList.value[couponIndex].collected = true
       }
     }
-    
+
     // 更新选择状态
     selectedCouponIndex.value = index
     selectedCoupon.value = coupon
-    
+
     showToast(`已选择优惠券：${coupon.name}`)
     showCouponPopUp.value = false
-    
   } catch (error: unknown) {
     console.error('领取优惠券失败:', error)
     const errorData = error as { code?: number; msg?: string }
-    
+
     // 检查是否是未登录（401）
     if (errorData.code === 401) {
       showToast('请先登录')
@@ -255,7 +259,7 @@ const fetchProductDetail = async () => {
     }
     const res = await getProductDetail(id)
     productDetail.value = res || undefined
-    
+
     // 从 store 获取收藏状态（基于 localStorage 持久化）
     isFavorite.value = favoriteStore.isFavorite(productDetail.value?.id || 0)
   } catch (error) {
@@ -307,7 +311,8 @@ const handleBuy = async (data: { sku: Sku; quantity: number }) => {
   }
 
   // 更新已选规格文本
-  const specText = data.sku.specs?.map((spec: SpecItem) => `${spec.name}: ${spec.value}`).join(' / ') || ''
+  const specText =
+    data.sku.specs?.map((spec: SpecItem) => `${spec.name}: ${spec.value}`).join(' / ') || ''
   selectedSpecText.value = specText
 
   if (currentAction.value === 'buy') {
@@ -321,7 +326,11 @@ const handleBuy = async (data: { sku: Sku; quantity: number }) => {
     router.push({
       path: '/checkout',
       query: {
-        goodsId: (route.query.type === 'seckill' ? seckillProductDetail.value?.seckillId : productDetail.value?.id)?.toString() || '',
+        goodsId:
+          (route.query.type === 'seckill'
+            ? seckillProductDetail.value?.seckillId
+            : productDetail.value?.id
+          )?.toString() || '',
         skuId: data.sku.id?.toString() || '',
         count: data.quantity.toString(),
         type: route.query.type
@@ -330,30 +339,33 @@ const handleBuy = async (data: { sku: Sku; quantity: number }) => {
   } else {
     // 加入购物车 - 直接调用 API 添加
     try {
-      const goodsId = route.query.type === 'seckill' 
-        ? (seckillProductDetail.value?.seckillId || 0)
-        : (productDetail.value?.id || 0)
-      
+      const goodsId =
+        route.query.type === 'seckill'
+          ? seckillProductDetail.value?.seckillId || 0
+          : productDetail.value?.id || 0
+
       const cartItem: CartItem = {
         cartId: Date.now(),
         goodsId: goodsId,
         skuId: data.sku.id || 0,
-        name: route.query.type === 'seckill' 
-          ? (seckillProductDetail.value?.title || '未命名商品')
-          : (productDetail.value?.name || '未命名商品'),
-        image: route.query.type === 'seckill'
-          ? (seckillProductDetail.value?.mainImages?.[0] || seckillProductDetail.value?.image || '')
-          : (productDetail.value?.mainImages?.[0] || productDetail.value?.image || ''),
+        name:
+          route.query.type === 'seckill'
+            ? seckillProductDetail.value?.title || '未命名商品'
+            : productDetail.value?.name || '未命名商品',
+        image:
+          route.query.type === 'seckill'
+            ? seckillProductDetail.value?.mainImages?.[0] || seckillProductDetail.value?.image || ''
+            : productDetail.value?.mainImages?.[0] || productDetail.value?.image || '',
         price: data.sku.price || 0,
         count: data.quantity,
         specText: specText,
         checked: true
       }
-      
+
       await cartStore.addToCart(cartItem)
       showToast('加入购物车成功')
       showSpec.value = false
-    } catch (error) {
+    } catch {
       showToast('加入购物车失败')
     }
   }
@@ -373,7 +385,6 @@ onMounted(() => {
 van-nav-bar .van-icon.active {
   color: #ee0a24;
 }
-
 
 .product-detail-page {
   padding-bottom: 100px;

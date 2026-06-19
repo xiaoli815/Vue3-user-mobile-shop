@@ -12,5 +12,7 @@ export const getBannersList = () => {
 }
 
 export const getHotProducts = (params: { page: number; pageSize: number }) => {
-  return request.get<HotProductsResponse>(`/home/hot?page=${params.page}&pageSize=${params.pageSize}`).then(res => res.data)
+  return request
+    .get<HotProductsResponse>(`/home/hot?page=${params.page}&pageSize=${params.pageSize}`)
+    .then(res => res.data)
 }

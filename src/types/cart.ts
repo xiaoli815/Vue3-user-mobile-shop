@@ -11,7 +11,6 @@ export interface CartItem {
   count: number
   stock?: number
   checked: boolean
-  
 }
 
 export type CartListResponse = ApiResponse<CartItem[]>

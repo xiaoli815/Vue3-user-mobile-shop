@@ -13,7 +13,7 @@ export const useOrderStore = defineStore('order', () => {
     const userKey = userStore.getUserKey()
     return `order_list_${userKey}`
   }
-  
+
   // 从 localStorage 加载订单列表
   const loadOrdersFromStorage = () => {
     try {
@@ -25,7 +25,7 @@ export const useOrderStore = defineStore('order', () => {
       console.error('加载订单列表失败:', error)
     }
   }
-  
+
   // 保存订单列表到 localStorage
   const saveOrdersToStorage = () => {
     try {
@@ -39,16 +39,16 @@ export const useOrderStore = defineStore('order', () => {
   const reloadForUser = () => {
     loadOrdersFromStorage()
   }
-  
+
   // 添加订单
   const addOrder = (order: OrderData) => {
     orders.value.unshift(order)
     saveOrdersToStorage()
   }
-  
+
   // 获取订单列表
   const getOrders = computed(() => orders.value)
-  
+
   // 根据状态筛选订单
   const getOrdersByStatus = (status: string) => {
     if (status === '全部') {
@@ -56,7 +56,7 @@ export const useOrderStore = defineStore('order', () => {
     }
     return orders.value.filter(order => order.status === status)
   }
-  
+
   // 更新订单状态
   const updateOrderStatus = (orderId: string, newStatus: string) => {
     const order = orders.value.find(o => o.orderId === orderId)
@@ -65,10 +65,10 @@ export const useOrderStore = defineStore('order', () => {
       saveOrdersToStorage()
     }
   }
-  
+
   // 初始化
   loadOrdersFromStorage()
-  
+
   return {
     orders,
     addOrder,

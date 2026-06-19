@@ -4,7 +4,9 @@ import { productList } from './product'
 // ========== 分类树数据 ==========
 const categoryTree = [
   {
-    id: 1, name: '手机数码', icon: 'phone-o',
+    id: 1,
+    name: '手机数码',
+    icon: 'phone-o',
     children: [
       { id: 101, name: '手机' },
       { id: 102, name: '平板电脑' },
@@ -17,7 +19,9 @@ const categoryTree = [
     ]
   },
   {
-    id: 2, name: '服装鞋帽', icon: 'bag-o',
+    id: 2,
+    name: '服装鞋帽',
+    icon: 'bag-o',
     children: [
       { id: 201, name: '男装' },
       { id: 202, name: '女装' },
@@ -30,7 +34,9 @@ const categoryTree = [
     ]
   },
   {
-    id: 3, name: '家用电器', icon: 'tv-o',
+    id: 3,
+    name: '家用电器',
+    icon: 'tv-o',
     children: [
       { id: 301, name: '空调' },
       { id: 302, name: '冰箱' },
@@ -43,7 +49,9 @@ const categoryTree = [
     ]
   },
   {
-    id: 4, name: '美妆护肤', icon: 'gem-o',
+    id: 4,
+    name: '美妆护肤',
+    icon: 'gem-o',
     children: [
       { id: 401, name: '面部精华' },
       { id: 402, name: '眼霜/眼精华' },
@@ -56,7 +64,9 @@ const categoryTree = [
     ]
   },
   {
-    id: 5, name: '食品生鲜', icon: 'shopping-cart-o',
+    id: 5,
+    name: '食品生鲜',
+    icon: 'shopping-cart-o',
     children: [
       { id: 501, name: '休闲零食' },
       { id: 502, name: '坚果炒货' },
@@ -69,7 +79,9 @@ const categoryTree = [
     ]
   },
   {
-    id: 6, name: '家居家装', icon: 'home-o',
+    id: 6,
+    name: '家居家装',
+    icon: 'home-o',
     children: [
       { id: 601, name: '沙发' },
       { id: 602, name: '床/床垫' },
@@ -82,7 +94,9 @@ const categoryTree = [
     ]
   },
   {
-    id: 7, name: '母婴玩具', icon: 'gift-o',
+    id: 7,
+    name: '母婴玩具',
+    icon: 'gift-o',
     children: [
       { id: 701, name: '纸尿裤' },
       { id: 702, name: '喂养用品' },
@@ -95,7 +109,9 @@ const categoryTree = [
     ]
   },
   {
-    id: 8, name: '图书文娱', icon: 'bookmark-o',
+    id: 8,
+    name: '图书文娱',
+    icon: 'bookmark-o',
     children: [
       { id: 801, name: '文学小说' },
       { id: 802, name: '历史/社科' },
@@ -145,7 +161,8 @@ Mock.mock(/\/api\/category\/goods/, 'get', (options: any) => {
   list = list.slice(start, start + pageSize)
 
   return {
-    code: 200, msg: 'success',
+    code: 200,
+    msg: 'success',
     data: { list, total, page, pageSize }
   }
 })

@@ -1,9 +1,9 @@
 import request from '@/utils/request'
-import { 
-  CouponListResponse, 
-  AvailableCouponsResponse, 
-  CollectCouponResponse, 
-  MyCouponsResponse 
+import {
+  CouponListResponse,
+  AvailableCouponsResponse,
+  CollectCouponResponse,
+  MyCouponsResponse
 } from '@/types/coupon'
 
 /**
@@ -20,7 +20,9 @@ export const getCouponList = () => {
  * @returns 可用优惠券列表
  */
 export const getAvailableCoupons = (amount: number) => {
-  return request.get<AvailableCouponsResponse>('/coupons/available', { params: { amount } }).then(res => res.data)
+  return request
+    .get<AvailableCouponsResponse>('/coupons/available', { params: { amount } })
+    .then(res => res.data)
 }
 
 /**
@@ -56,7 +58,9 @@ export const useCoupon = (id: number, orderId: string) => {
  * @returns 领取结果
  */
 export const batchCollectCoupons = (ids: number[]) => {
-  return request.post<CollectCouponResponse>('/coupons/batch-collect', { ids }).then(res => res.data)
+  return request
+    .post<CollectCouponResponse>('/coupons/batch-collect', { ids })
+    .then(res => res.data)
 }
 
 /**

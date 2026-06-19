@@ -9,6 +9,7 @@ import './coupon'
 import './order'
 import './user'
 import './seckill'
+import './search'
 
 // 设置全局延迟
 Mock.setup({

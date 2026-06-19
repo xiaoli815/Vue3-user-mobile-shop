@@ -1,9 +1,25 @@
 import Mock from 'mockjs'
+import { getToken, removeToken as clearToken } from '@/utils/token'
 
 // ========== 用户数据存储 ==========
-const userStore: Record<string, { id: number; nickname: string; avatar: string; phone: string; password: string }> = {
-  'admin': { id: 1, nickname: '小明', avatar: '/images/avatar.png', phone: '13800138000', password: '123456' },
-  'test': { id: 2, nickname: '测试用户', avatar: '/images/avatar.png', phone: '13900139000', password: '123456' }
+const userStore: Record<
+  string,
+  { id: number; nickname: string; avatar: string; phone: string; password: string }
+> = {
+  admin: {
+    id: 1,
+    nickname: '小明',
+    avatar: '/images/avatar.png',
+    phone: '13800138000',
+    password: '123456'
+  },
+  test: {
+    id: 2,
+    nickname: '测试用户',
+    avatar: '/images/avatar.png',
+    phone: '13900139000',
+    password: '123456'
+  }
 }
 
 // 当前登录用户的 token 映射 - 从 localStorage 恢复
@@ -75,11 +91,11 @@ Mock.mock('/api/user/login', 'post', (options: any) => {
 // 获取当前用户信息
 Mock.mock('/api/user/info', 'get', (options: any) => {
   let token = (options.headers || {}).Authorization || (options.headers || {}).authorization || ''
-  
+
   if (!token) {
-    token = localStorage.getItem('token') || ''
+    token = getToken() || ''
   }
-  
+
   const userId = tokenStore[token.replace('Bearer ', '')]
   if (!userId) {
     return { code: 401, msg: '未登录或登录已过期', data: null }
@@ -103,14 +119,14 @@ Mock.mock('/api/user/info', 'get', (options: any) => {
 // 退出登录
 Mock.mock('/api/user/logout', 'post', (options: any) => {
   let token = (options.headers || {}).Authorization || (options.headers || {}).authorization || ''
-  
+
   if (!token) {
-    token = localStorage.getItem('token') || ''
+    token = getToken() || ''
   }
-  
+
   delete tokenStore[token.replace('Bearer ', '')]
   // 保存到 localStorage
   saveTokenStore()
-  localStorage.removeItem('token')
+  clearToken()
   return { code: 200, msg: '退出成功', data: null }
 })

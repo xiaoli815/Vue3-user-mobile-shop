@@ -19,8 +19,6 @@ export interface OrderData {
   address: Address | null
 }
 
-
-
 export type OrderStatus = 'pending_pay' | 'pending_ship' | 'shipped' | 'completed' | 'cancelled'
 
 export interface Order {

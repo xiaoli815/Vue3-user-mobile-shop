@@ -1,6 +1,7 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 
+
 const router = createRouter({
   history: createWebHashHistory(),
   routes: [
@@ -91,11 +92,11 @@ const router = createRouter({
       name: 'Coupon',
       component: () => import('@/views/user/Coupon.vue'),
       meta: { title: '优惠券中心', requiresAuth: true }
-    },
+    }
   ]
 })
 
-router.beforeEach((to,from, next) => {
+router.beforeEach((to, from, next) => {
   // 设置页面标题
   document.title = (to.meta.title as string) || '优选商城'
 

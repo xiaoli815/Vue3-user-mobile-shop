@@ -1,5 +1,9 @@
 import { describe, it, expect } from 'vitest'
-import { calculateCouponDiscount, calculateDiscountedPrice, calculateItemDiscountedPrice } from '@/utils/coupon'
+import {
+  calculateCouponDiscount,
+  calculateDiscountedPrice,
+  calculateItemDiscountedPrice
+} from '@/utils/coupon'
 import type { Coupon } from '@/types/coupon'
 
 const createCoupon = (overrides: Partial<Coupon> = {}): Coupon => ({

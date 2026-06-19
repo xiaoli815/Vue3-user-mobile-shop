@@ -15,7 +15,7 @@ Mock.mock('/api/cart', 'get', () => {
     name: item.productName || item.name || '',
     image: item.productImage || item.image || '',
     price: item.price || 0,
-    specText: item.specs ? item.specs.map((s: any) => s.value).join(' / ') : (item.specText || ''),
+    specText: item.specs ? item.specs.map((s: any) => s.value).join(' / ') : item.specText || '',
     count: item.quantity || item.count || 1,
     stock: item.stock || 999,
     checked: item.checked !== undefined ? item.checked : item.isChecked || true
@@ -62,7 +62,7 @@ Mock.mock('/api/cart/add', 'post', (options: any) => {
 Mock.mock('/api/cart/clear', 'post', (options: any) => {
   const body = JSON.parse(options.body)
   const { ids } = body
-  
+
   if (ids && ids.length) {
     // 删除指定的商品
     cartData = cartData.filter(i => !ids.includes(Number(i.cartId)))

@@ -12,10 +12,12 @@ export {}
 declare module 'vue' {
   export interface GlobalComponents {
     CouponPopUp: typeof import('./src/components/CouponPopUp.vue')['default']
+    ProductList: typeof import('./src/components/home/ProductList.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
-    SkuPopUp: typeof import('./src/components/skuPopUp.vue')['default']
-    Tabbar: typeof import('./src/components/tabbar.vue')['default']
+    Skeleton: typeof import('./src/components/Skeleton.vue')['default']
+    SkuPopUp: typeof import('./src/components/SkuPopUp.vue')['default']
+    Tabbar: typeof import('./src/components/Tabbar.vue')['default']
     VanActionBar: typeof import('vant/es')['ActionBar']
     VanActionBarButton: typeof import('vant/es')['ActionBarButton']
     VanActionBarIcon: typeof import('vant/es')['ActionBarIcon']
@@ -47,8 +49,5 @@ declare module 'vue' {
     VanTabs: typeof import('vant/es')['Tabs']
     VanTag: typeof import('vant/es')['Tag']
     VanUploader: typeof import('vant/es')['Uploader']
-  }
-  export interface GlobalDirectives {
-    vInfiniteScroll: typeof import('element-plus/es')['ElInfiniteScroll']
   }
 }

@@ -1,27 +1,29 @@
 <template>
   <div class="order-list-page">
-    <van-nav-bar title="我的订单" left-arrow fixed placeholder @click-left="$router.push('/home')" />
+    <van-nav-bar
+      title="我的订单"
+      left-arrow
+      fixed
+      placeholder
+      @click-left="$router.push('/home')"
+    />
 
     <!-- 订单状态Tab -->
-    <van-tabs sticky>
-      <van-tab title="全部" />
-      <van-tab title="待付款" />
-      <van-tab title="待发货" />
-      <van-tab title="待收货" />
-      <van-tab title="已完成" />
+    <van-tabs v-model:active="activeTab" sticky @change="onTabChange">
+      <van-tab v-for="tab in tabs" :key="tab.key" :title="tab.title" :name="tab.key" />
     </van-tabs>
 
     <!-- 订单列表 -->
-    <div class="order-list" v-if="orders.length > 0">
-      <div class="order-card" v-for="order in orders" :key="order.orderId">
+    <div v-if="filteredOrders.length > 0" class="order-list">
+      <div v-for="order in filteredOrders" :key="order.orderId" class="order-card">
         <!-- 订单头部 -->
         <div class="order-header">
           <span>订单号: {{ order.orderId }}</span>
-          <span class="order-status">{{ order.status }}</span>
+          <span class="order-status">{{ STATUS_TEXT[order.status] || order.status }}</span>
         </div>
 
         <!-- 订单商品 -->
-        <div class="order-goods" v-for="item in order.goods" :key="item.goodsId">
+        <div v-for="item in order.goods" :key="item.goodsId" class="order-goods">
           <img v-if="item.image" :src="item.image" class="order-img" />
           <div v-else class="order-img-placeholder">商品图</div>
           <div class="order-info">
@@ -36,7 +38,10 @@
 
         <!-- 订单底部 -->
         <div class="order-footer">
-          <span>共{{ getTotalCount(order.goods) }}件 实付: <span class="price">{{ formatPrice(order.totalAmount) }}</span></span>
+          <span
+            >共{{ getTotalCount(order.goods) }}件 实付:
+            <span class="price">{{ formatPrice(order.totalAmount) }}</span></span
+          >
           <div class="order-actions">
             <van-button size="small" plain>取消订单</van-button>
             <van-button size="small" type="danger">立即付款</van-button>
@@ -46,21 +51,65 @@
     </div>
 
     <!-- 空状态 -->
-    <div class="order-list" v-else>
+    <div v-else class="order-list">
       <van-empty description="暂无订单" />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { onMounted, computed, ref } from 'vue'
+import { useRoute } from 'vue-router'
 import { OrderGoods } from '@/types/order'
 import { Address } from '@/types/address'
 import { useOrderStore } from '@/stores/order'
 import { formatPrice } from '@/utils/price'
 import { getSessionStorage, removeSessionStorage } from '@/utils/storage'
 
+const route = useRoute()
 const orderStore = useOrderStore()
+
+// 订单状态映射
+const STATUS_MAP: Record<string, string> = {
+  pending_pay: '待付款',
+  paid: '待发货',
+  shipped: '待收货',
+  completed: '已完成',
+  cancelled: '已取消',
+  refund: '已退款',
+}
+
+const STATUS_TEXT: Record<string, string> = {
+  pending_pay: '待付款',
+  paid: '待发货',
+  shipped: '待收货',
+  completed: '已完成',
+  cancelled: '已取消',
+  refund: '已退款',
+}
+
+const tabs = [
+  { key: 'all', title: '全部' },
+  { key: 'pending_pay', title: '待付款' },
+  { key: 'paid', title: '待发货' },
+  { key: 'shipped', title: '待收货' },
+  { key: 'completed', title: '已完成' },
+]
+
+// 从 URL query 获取初始状态
+const activeTab = ref<string>((route.query.status as string) || 'all')
+
+const onTabChange = (tab: string | number) => {
+  activeTab.value = String(tab)
+}
+
+// 根据选中的 tab 筛选订单
+const filteredOrders = computed(() => {
+  if (activeTab.value === 'all') {
+    return orderStore.orders
+  }
+  return orderStore.orders.filter(order => order.status === STATUS_MAP[activeTab.value])
+})
 
 interface Order {
   orderId: string
@@ -70,9 +119,6 @@ interface Order {
   totalAmount: number
   address: Address | null
 }
-
-// 从 store 获取订单列表
-const orders = computed(() => orderStore.orders)
 
 // 计算订单商品总数
 const getTotalCount = (goods: OrderGoods[]): number => {
@@ -92,8 +138,6 @@ onMounted(() => {
     removeSessionStorage('recentOrder')
   }
 })
-
-
 </script>
 
 <style scoped>
