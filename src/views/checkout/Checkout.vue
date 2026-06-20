@@ -67,7 +67,6 @@
       :selected-index="selectedCouponIndex"
       :order-amount="totalOriginalPrice"
       @select="onCouponSelect"
-      @clear="onCouponClear"
     />
 
     <div class="price-section card">
@@ -89,7 +88,11 @@
       </div>
       <div class="price-row">
         <span>运费</span>
-        <span>免运费</span>
+        <span v-if="freeAmount > 0" class="shipping-tip">
+          <span class="price">{{ formatPrice(shippingFee) }}</span>
+          <span class="free-tip">（再买{{ formatPrice(freeAmount) }}包邮）</span>
+        </span>
+        <span v-else class="shipping-free">免运费</span>
       </div>
       <div class="price-row total">
         <span>实付金额</span>
@@ -124,7 +127,8 @@ import { useRoute, useRouter } from 'vue-router'
 import { getProductDetail } from '@/api/product'
 import { getSeckillProductDetail } from '@/api/seckill'
 import { getAddressList } from '@/api/address'
-import { preOrder, submitOrder } from '@/api/order'
+import {  submitOrder } from '@/api/order'
+import { calculateShipping } from '@/api/shipping'
 import { getCouponList } from '@/api/coupon'
 import type { OrderGoods } from '@/types/order'
 import type { Address } from '@/types/address'
@@ -162,23 +166,32 @@ const showCouponPopUp = ref(false)
 const allCoupons = ref<Coupon[]>([])
 const selectedCouponIndex = ref(-1)
 
+// 运费相关
+const shippingFee = ref(0)        // 运费（分）
+const freeAmount = ref(0)         // 还差多少包邮（分）
+
 const appliedCoupons = ref<AppliedCoupons>({
   store: null,
   platform: null,
   brand: null,
   category: null
 })
-
+// 计算商品ID列表
 const goodsIds = computed(() => getGoodsIdsFromOrder(orderGoods.value))
-
+// 过滤可用优惠券
 const usableCoupons = computed(() => {
   return filterUsableCoupons(allCoupons.value, totalOriginalPrice.value, goodsIds.value)
 })
-
+// 计算订单价格（含运费）
 const priceBreakdown = computed<PriceBreakdown>(() => {
-  return calculatePriceBreakdown(totalOriginalPrice.value, appliedCoupons.value)
+  const base = calculatePriceBreakdown(totalOriginalPrice.value, appliedCoupons.value)
+  return {
+    ...base,
+    shipping: shippingFee.value,
+    finalPrice: base.finalPrice + shippingFee.value
+  }
 })
-
+// 计算商品折扣后的价格
 const getDiscountedPrice = (item: OrderGoods): number => {
   return calculateItemDiscountedPrice(
     item.price,
@@ -188,8 +201,7 @@ const getDiscountedPrice = (item: OrderGoods): number => {
   )
 }
 
-
-
+// 获取优惠券列表
 const fetchCouponList = async () => {
   try {
     const res = await getCouponList()
@@ -198,7 +210,7 @@ const fetchCouponList = async () => {
     console.error('获取优惠券列表失败:', error)
   }
 }
-
+// 选择优惠券
 const onCouponSelect = (coupon: Coupon, index: number) => {
   selectedCouponIndex.value = index
   const result = applySingleCoupon(coupon, totalOriginalPrice.value, goodsIds.value)
@@ -212,12 +224,7 @@ const onCouponSelect = (coupon: Coupon, index: number) => {
   showToast(`已选择平台券：${coupon.name}`)
 }
 
-const onCouponClear = () => {
-  selectedCouponIndex.value = -1
-  appliedCoupons.value.platform = null
-  showToast('已取消使用平台券')
-}
-
+// 加载店铺优惠券
 const loadStoreCoupon = () => {
   const stored = getSessionStorage<Coupon>('storeCoupon')
   if (stored) {
@@ -230,14 +237,47 @@ const loadStoreCoupon = () => {
     }
   }
 }
-
+// 移除店铺优惠券
 const removeStoreCoupon = () => {
   appliedCoupons.value.store = null
   removeSessionStorage('storeCoupon')
   showToast('已移除店铺券')
 }
 
+// 计算运费
+const fetchShippingFee = async () => {
+  if (!address.value || orderGoods.value.length === 0) return
+  try {
+    const res = await calculateShipping({
+      addressId: address.value.id,
+      items: orderGoods.value.map(item => ({
+        goodsId: item.goodsId || 0,
+        skuId: 0,
+        count: item.count,
+        price: item.price
+      }))
+    })
+    if (res && res.code === 200 && res.data) {
+      shippingFee.value = res.data.fee / 100       // 后端返回分，转为元
+      freeAmount.value = res.data.freeAmount / 100
+    }
+  } catch {
+    console.error('获取运费失败')
+  }
+}
+
+// 监听地址变化 → 重新计算运费
+watch(() => address.value?.id, () => {
+  fetchShippingFee()
+})
+
+// 监听商品变化 → 重新计算运费
+watch(() => orderGoods.value.map(g => g.goodsId + '_' + g.count).join(','), () => {
+  fetchShippingFee()
+})
+// 监听订单价格变化
 watch([totalOriginalPrice, goodsIds], () => {
+  // 应用店铺优惠券
   if (appliedCoupons.value.store) {
     const result = applySingleCoupon(
       appliedCoupons.value.store.coupon,
@@ -252,7 +292,7 @@ watch([totalOriginalPrice, goodsIds], () => {
       appliedCoupons.value.store = result
     }
   }
-
+  // 应用平台优惠券
   if (appliedCoupons.value.platform) {
     const result = applySingleCoupon(
       appliedCoupons.value.platform.coupon,
@@ -268,22 +308,21 @@ watch([totalOriginalPrice, goodsIds], () => {
     }
   }
 })
-
+// 获取商品详情
 const fetchGoodsDetail = async (goodsId: number, skuId: number, count: number) => {
   try {
     loading.value = true
-    const response = await getProductDetail(goodsId)
-    const res = response
-
+    const res = await getProductDetail(goodsId)
     if (res && res.id) {
       let sku: SkuListItem | undefined
       if (skuId && res.skuList?.length) {
+        // 查找指定SKU
         sku = res.skuList.find(
           s => s.skuId === Number(skuId) || (s as { id?: number }).id === Number(skuId)
         )
       }
+      // 处理规格
       const specs = sku?.specs?.map(s => `${s.specName}: ${s.specValue}`).join(' / ') || ''
-
       orderGoods.value = [
         {
           goodsId: res.id,
@@ -294,7 +333,7 @@ const fetchGoodsDetail = async (goodsId: number, skuId: number, count: number) =
           specText: specs || '暂无规格'
         }
       ]
-
+      // 计算订单总金额
       totalOriginalPrice.value = orderGoods.value.reduce((sum, item) => sum + item.price * item.count, 0)
     }
   } catch {
@@ -303,22 +342,22 @@ const fetchGoodsDetail = async (goodsId: number, skuId: number, count: number) =
     loading.value = false
   }
 }
-
+// 获取秒杀商品详情
 const fetchSeckillGoodsDetail = async (seckillId: number, skuId: number, count: number) => {
   try {
     loading.value = true
     const res = await getSeckillProductDetail(seckillId)
-
+    // 处理秒杀商品详情
     if (res && res.seckillId) {
       let sku: SkuListItem | undefined
       if (skuId && res.skuList?.length) {
+        // 查找指定SKU
         sku = res.skuList.find(
           s => s.skuId === Number(skuId) || (s as { id?: number }).id === Number(skuId)
         )
       }
-
+      // 处理规格
       const specs = sku?.specs?.map(s => `${s.specName}: ${s.specValue}`).join(' / ') || ''
-
       orderGoods.value = [
         {
           goodsId: res.seckillId,
@@ -329,7 +368,7 @@ const fetchSeckillGoodsDetail = async (seckillId: number, skuId: number, count: 
           specText: specs || '暂无规格'
         }
       ]
-
+        // 计算订单总金额
       totalOriginalPrice.value = orderGoods.value.reduce((sum, item) => sum + item.price * item.count, 0)
     }
   } catch {
@@ -338,7 +377,7 @@ const fetchSeckillGoodsDetail = async (seckillId: number, skuId: number, count: 
     loading.value = false
   }
 }
-
+// 获取地址列表
 const fetchAddressList = async () => {
   try {
     const res = await getAddressList()
@@ -350,7 +389,7 @@ const fetchAddressList = async () => {
     showToast('获取地址列表失败')
   }
 }
-
+// 移除已购买商品从购物车
 const removePurchasedItemsFromCart = () => {
   const cartIds = route.query.cartIds
   if (cartIds) {
@@ -380,23 +419,12 @@ const handleSubmit = async () => {
   showLoadingToast({ message: '提交中...', forbidClick: true })
 
   try {
+    // 应用优惠券
     const couponIds: number[] = []
     if (appliedCoupons.value.store) couponIds.push(appliedCoupons.value.store.coupon.id)
     if (appliedCoupons.value.platform) couponIds.push(appliedCoupons.value.platform.coupon.id)
     if (appliedCoupons.value.brand) couponIds.push(appliedCoupons.value.brand.coupon.id)
-
-    await preOrder({
-      addressId: address.value.id,
-      items: orderGoods.value.map(item => ({
-        goodsId: item.goodsId,
-        skuId: 0,
-        count: item.count
-      })),
-      couponIds,
-      remark: remark.value,
-      finalPrice: priceBreakdown.value.finalPrice
-    })
-
+      // 提交订单
     const submitResult = await submitOrder({
       goods: orderGoods.value.map(item => ({
         goodsId: item.goodsId,
@@ -440,9 +468,10 @@ const handleSubmit = async () => {
 }
 
 onMounted(async () => {
+  // 初始化地址列表和优惠券列表
   await Promise.allSettled([fetchAddressList(), fetchCouponList()])
 
-  const type = route.query.type as string
+  const type = route.query.type
 
   if (type === 'seckill') {
     const seckillId = Number(route.query.goodsId)
@@ -457,6 +486,8 @@ onMounted(async () => {
   }
 
   loadStoreCoupon()
+  // 地址和商品都加载完成后，计算运费
+  fetchShippingFee()
 })
 </script>
 
@@ -563,7 +594,7 @@ onMounted(async () => {
   overflow: hidden;
   text-overflow: ellipsis;
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  line-clamp: 2;
   -webkit-box-orient: vertical;
 }
 

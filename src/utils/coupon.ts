@@ -30,6 +30,7 @@ export interface PriceBreakdown {
   brandDiscount: number
   categoryDiscount: number
   totalDiscount: number
+  shipping: number
   finalPrice: number
 }
 
@@ -361,6 +362,7 @@ export function calculatePriceBreakdown(
     brandDiscount,
     categoryDiscount,
     totalDiscount,
+    shipping: 0,
     finalPrice: Math.max(originalPrice - totalDiscount, 0)
   }
 }
