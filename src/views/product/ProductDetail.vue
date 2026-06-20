@@ -16,7 +16,7 @@
     <!-- 商品图片轮播 -->
     <van-swipe :autoplay="3000" indicator-color="#ee0a24" class="detail-swipe">
       <van-swipe-item
-        v-for="i in productDetail?.mainImages || seckillProductDetail?.mainImages || []"
+        v-for="i in (productDetail?.mainImages || seckillProductDetail?.mainImages || [])"
         :key="i"
       >
         <div class="image-placeholder">

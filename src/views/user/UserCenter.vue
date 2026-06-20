@@ -24,7 +24,7 @@
     <!-- 常用功能 -->
     <div class="func-section card">
       <van-grid :column-num="3" :border="false">
-        <van-grid-item icon="location-o" text="地址管理" />
+        <van-grid-item icon="location-o" text="地址管理" @click="toAddress" />
         <van-grid-item icon="coupon-o" text="优惠券" @click="goCoupon" />
         <van-grid-item icon="like-o" text="我的收藏" @click="toFavorite" />
       </van-grid>
@@ -69,11 +69,14 @@ const toLogin = () => {
 const toFavorite = () => {
   router.push('/favorite')
 }
+const toAddress = () => {
+  router.push('/address')
+}
 // 用户登录信息的获取
 const userInfo = ref<{ id?: number; nickname?: string; avatar?: string; phone?: string }>({})
 onMounted(async () => {
   const res = await getUserInfo()
-  console.log(res)
+  // console.log(res)
   if (res.code === 200) {
     userInfo.value = res.data
   } else {

@@ -12,6 +12,8 @@ const createCoupon = (overrides: Partial<Coupon> = {}): Coupon => ({
   type: '满减',
   value: 20,
   minUseAmount: 100,
+  startAt: Date.now() - 86400000,
+  endAt: Date.now() + 86400000,
   expireTime: '2026-12-31',
   isUsable: true,
   ...overrides

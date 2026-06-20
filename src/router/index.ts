@@ -92,6 +92,12 @@ const router = createRouter({
       name: 'Coupon',
       component: () => import('@/views/user/Coupon.vue'),
       meta: { title: '优惠券中心', requiresAuth: true }
+    },
+    {
+      path: '/address',
+      name: 'Address',
+      component: () => import('@/views/user/Address.vue'),
+      meta: { title: '地址管理', requiresAuth: true }
     }
   ]
 })

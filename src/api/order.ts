@@ -1,18 +1,6 @@
 import request from '@/utils/request'
-import type { OrderListResponse, OrderDetailResponse, OrderResponse } from '@/types/order'
+import type { OrderListResponse, OrderResponse } from '@/types/order'
 import type { Order } from '@/types/order'
-
-export interface PreOrderParams {
-  cartIds?: number[]
-  addressId?: number
-  goodsId?: number
-  skuId?: number
-  count?: number
-  items?: { goodsId?: number; skuId?: number; count?: number }[]
-  couponIds?: number[]
-  remark?: string
-  finalPrice?: number
-}
 
 export interface SubmitOrderParams {
   goods: { goodsId?: number; name: string; price: number; count: number }[]
@@ -22,22 +10,18 @@ export interface SubmitOrderParams {
   remark?: string
 }
 
-// 订单列表（分页，按状态筛选）
-export const getOrderList = (status?: string) =>
-  request.get<OrderListResponse>('/order/list', { params: { status } })
-
-// 订单预览（确认下单前）
-export const preOrder = (data: PreOrderParams): Promise<Order | null> =>
+export const getOrderList = (status?: string): Promise<{ list: Order[], total: number } | null> =>
   request
-    .post<OrderDetailResponse>('/order/pre', data)
-    .then(res => res.data) as unknown as Promise<Order | null>
+    .get<OrderListResponse>('/order/list', { params: { status } })
+    .then(res => (res as unknown as OrderListResponse).data)
 
-// 提交订单
-export const submitOrder = (data: SubmitOrderParams) =>
-  request.post<OrderResponse>('/order/submit', data).then(res => res.data)
+export const submitOrder = (data: SubmitOrderParams): Promise<{ orderId: number; orderNo: string } | null> =>
+  request
+    .post<OrderResponse>('/order/submit', data)
+    .then(res => (res as unknown as OrderResponse).data)
 
-// 取消订单
-export const cancelOrder = (id: number) => request.post(`/order/cancel`, { orderid: id })
+export const cancelOrder = (id: number) =>
+  request.post<{ code: number; msg: string; data: null }>(`/order/cancel`, { orderid: id }).then(res => res as unknown as { code: number; msg: string; data: null })
 
-// 确认收货
-export const confirmReceipt = (id: number) => request.post(`/order/confirm`, { orderid: id })
+export const confirmReceipt = (id: number) =>
+  request.post<{ code: number; msg: string; data: null }>(`/order/confirm`, { orderid: id }).then(res => res as unknown as { code: number; msg: string; data: null })

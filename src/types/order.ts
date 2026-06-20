@@ -39,7 +39,7 @@ export interface Order {
   freightPrice?: number
 }
 
-export type OrderListResponse = ApiResponse<Order[]>
+export type OrderListResponse = ApiResponse<{ list: Order[], total: number }>
 
 export type OrderDetailResponse = ApiResponse<Order | null>
 

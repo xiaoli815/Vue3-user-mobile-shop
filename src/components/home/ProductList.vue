@@ -7,7 +7,7 @@
       <div class="product-info">
         <p class="product-name">{{ item.name }}</p>
         <div class="product-bottom">
-          <span class="product-price price">¥{{ item.price }}</span>
+          <span class="product-price price">{{ item.price }}</span>
           <span v-if="item.sales" class="product-sales">{{ item.sales }}人已购</span>
         </div>
       </div>

@@ -1,15 +1,36 @@
-import axios from 'axios'
+import axios, { type AxiosRequestConfig, type InternalAxiosRequestConfig, type AxiosResponse } from 'axios'
 import { showToast } from 'vant'
 import router from '@/router'
 import { getToken, removeToken } from '@/utils/token'
 
-const request = axios.create({
+interface UnwrappedAxiosInstance {
+  get<T = unknown>(url: string, config?: AxiosRequestConfig): Promise<T>
+  post<T = unknown>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T>
+  put<T = unknown>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T>
+  delete<T = unknown>(url: string, config?: AxiosRequestConfig): Promise<T>
+  patch<T = unknown>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T>
+  interceptors: {
+    request: {
+      use(
+        onFulfilled?: (config: InternalAxiosRequestConfig) => InternalAxiosRequestConfig | Promise<InternalAxiosRequestConfig>,
+        onRejected?: (error: unknown) => unknown
+      ): number
+    }
+    response: {
+      use(
+        onFulfilled?: (response: AxiosResponse) => unknown,
+        onRejected?: (error: unknown) => unknown
+      ): number
+    }
+  }
+}
+
+const axiosInstance = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
   timeout: 10000
 })
 
-// 请求拦截器：携带token
-request.interceptors.request.use(
+axiosInstance.interceptors.request.use(
   config => {
     const token = getToken()
     if (token) {
@@ -22,7 +43,7 @@ request.interceptors.request.use(
   }
 )
 
-request.interceptors.response.use(
+axiosInstance.interceptors.response.use(
   response => {
     if (response.data.code === 200) {
       return response.data
@@ -31,7 +52,6 @@ request.interceptors.response.use(
     return Promise.reject(response.data)
   },
   error => {
-    // 401 未登录或 token 过期，清除 token 并跳转登录页
     if (error.response?.status === 401) {
       removeToken()
       showToast('登录已过期，请重新登录')
@@ -45,5 +65,7 @@ request.interceptors.response.use(
     return Promise.reject(error)
   }
 )
+
+const request = axiosInstance as unknown as UnwrappedAxiosInstance
 
 export default request

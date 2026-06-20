@@ -43,7 +43,7 @@
             <span class="price">{{ formatPrice(order.totalAmount) }}</span></span
           >
           <div class="order-actions">
-            <van-button size="small" plain>取消订单</van-button>
+            <van-button size="small" plain type="danger" @click="handleCancelOrder(order.orderId)">取消订单</van-button>
             <van-button size="small" type="danger">立即付款</van-button>
           </div>
         </div>
@@ -60,24 +60,28 @@
 <script setup lang="ts">
 import { onMounted, computed, ref } from 'vue'
 import { useRoute } from 'vue-router'
+import { showToast } from 'vant'
 import { OrderGoods } from '@/types/order'
 import { Address } from '@/types/address'
 import { useOrderStore } from '@/stores/order'
 import { formatPrice } from '@/utils/price'
 import { getSessionStorage, removeSessionStorage } from '@/utils/storage'
+import { getOrderList, cancelOrder } from '@/api/order'
 
 const route = useRoute()
 const orderStore = useOrderStore()
 
-// 订单状态映射
-const STATUS_MAP: Record<string, string> = {
-  pending_pay: '待付款',
-  paid: '待发货',
-  shipped: '待收货',
-  completed: '已完成',
-  cancelled: '已取消',
-  refund: '已退款',
+// 取消订单
+const handleCancelOrder = async (orderId: string) => {
+  const res = await cancelOrder(parseInt(orderId))
+  console.log(res)
+  // API 成功后同步更新本地 store 和 localStorage
+  if (res && res.code === 200) {
+    orderStore.updateOrderStatus(orderId, 'cancelled')
+    showToast('订单已取消')
+  }
 }
+
 
 const STATUS_TEXT: Record<string, string> = {
   pending_pay: '待付款',
@@ -88,6 +92,7 @@ const STATUS_TEXT: Record<string, string> = {
   refund: '已退款',
 }
 
+
 const tabs = [
   { key: 'all', title: '全部' },
   { key: 'pending_pay', title: '待付款' },
@@ -96,19 +101,17 @@ const tabs = [
   { key: 'completed', title: '已完成' },
 ]
 
-// 从 URL query 获取初始状态
 const activeTab = ref<string>((route.query.status as string) || 'all')
 
 const onTabChange = (tab: string | number) => {
   activeTab.value = String(tab)
 }
 
-// 根据选中的 tab 筛选订单
 const filteredOrders = computed(() => {
   if (activeTab.value === 'all') {
     return orderStore.orders
   }
-  return orderStore.orders.filter(order => order.status === STATUS_MAP[activeTab.value])
+  return orderStore.orders.filter(order => order.status === activeTab.value)
 })
 
 interface Order {
@@ -125,17 +128,36 @@ const getTotalCount = (goods: OrderGoods[]): number => {
   return goods.reduce((sum, item) => sum + item.count, 0)
 }
 
-onMounted(() => {
-  // 从 sessionStorage 获取最近提交的订单（如果存在）
+onMounted(async () => {
   const recentOrder = getSessionStorage<Order>('recentOrder')
   if (recentOrder) {
-    // 检查是否已经添加到 store 中（避免重复添加）
     const exists = orderStore.orders.some(o => o.orderId === recentOrder.orderId)
     if (!exists) {
       orderStore.addOrder(recentOrder)
     }
-    // 清除临时存储的数据
     removeSessionStorage('recentOrder')
+  }
+
+  try {
+    const res = await getOrderList()
+    // console.log(res)
+    if (res && res.list) {
+      res.list.forEach(backendOrder => {
+        const exists = orderStore.orders.some(o => o.orderId === String(backendOrder.orderId))
+        if (!exists) {
+          orderStore.addOrder({
+            orderId: String(backendOrder.orderId),
+            createTime: backendOrder.createTime,
+            status: backendOrder.status as string || 'pending_pay',
+            goods: backendOrder.goodsList || [],
+            totalAmount: backendOrder.finalPrice || 0,
+            address: null
+          })
+        }
+      })
+    }
+  } catch (error) {
+    console.error('同步后端订单失败:', error)
   }
 })
 </script>

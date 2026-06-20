@@ -2,8 +2,8 @@
   <div class="checkout-page">
     <van-nav-bar title="确认订单" left-arrow fixed placeholder @click-left="$router.back()" />
 
-    <div v-if="address" class="address-section card">
-      <div class="address-info">
+    <div v-if="address" class="address-section card" @click="router.push({ path: '/address' })">
+      <div class="address-info" >
         <van-icon name="location-o" size="20" color="#ee0a24" />
         <div class="address-text">
           <p class="address-user">
@@ -124,7 +124,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { getProductDetail } from '@/api/product'
 import { getSeckillProductDetail } from '@/api/seckill'
 import { getAddressList } from '@/api/address'
-import { preOrder } from '@/api/order'
+import { preOrder, submitOrder } from '@/api/order'
 import { getCouponList } from '@/api/coupon'
 import type { OrderGoods } from '@/types/order'
 import type { Address } from '@/types/address'
@@ -142,9 +142,9 @@ import {
   filterUsableCoupons,
   type AppliedCoupons,
   type PriceBreakdown,
-  type CouponDiscountResult
+ 
 } from '@/utils/coupon'
-import { getSessionStorage, removeSessionStorage, setSessionStorage } from '@/utils/storage'
+import { getSessionStorage, removeSessionStorage } from '@/utils/storage'
 
 const orderStore = useOrderStore()
 const cartStore = useCartStore()
@@ -187,6 +187,8 @@ const getDiscountedPrice = (item: OrderGoods): number => {
     priceBreakdown.value.totalDiscount
   )
 }
+
+
 
 const fetchCouponList = async () => {
   try {
@@ -340,9 +342,10 @@ const fetchSeckillGoodsDetail = async (seckillId: number, skuId: number, count: 
 const fetchAddressList = async () => {
   try {
     const res = await getAddressList()
-    if (res && Array.isArray(res)) {
-      address.value = res[0] || null
-    }
+      const list = (res as any).data as Address[]
+      // 优先取默认地址，否则取第一个
+      address.value = list.find(a => a.isDefault) || list[0] || null
+  
   } catch {
     showToast('获取地址列表失败')
   }
@@ -394,6 +397,32 @@ const handleSubmit = async () => {
       finalPrice: priceBreakdown.value.finalPrice
     })
 
+    const submitResult = await submitOrder({
+      goods: orderGoods.value.map(item => ({
+        goodsId: item.goodsId,
+        name: item.name,
+        image: item.image,
+        price: item.price,
+        count: item.count,
+        specText: item.specText || '暂无规格'
+      })),
+      addressId: address.value.id,
+      totalAmount: priceBreakdown.value.finalPrice,
+      remark: remark.value
+    })
+
+    if (submitResult) {
+      const orderData = {
+        orderId: String(submitResult.orderId),
+        createTime: new Date().toISOString(),
+        status: 'pending_pay',
+        goods: orderGoods.value,
+        totalAmount: priceBreakdown.value.finalPrice,
+        address: address.value
+      }
+      orderStore.addOrder(orderData)
+    }
+
     removePurchasedItemsFromCart()
     removeSessionStorage('storeCoupon')
 
@@ -402,7 +431,7 @@ const handleSubmit = async () => {
     setTimeout(() => {
       router.push('/orders')
     }, 1500)
-  } catch (error) {
+  } catch {
     showToast('提交订单失败')
   } finally {
     submitting.value = false
