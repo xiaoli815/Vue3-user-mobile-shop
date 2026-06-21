@@ -27,7 +27,8 @@ interface UnwrappedAxiosInstance {
 
 const axiosInstance = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
-  timeout: 10000
+  // 超时 2s，避免长时间阻塞页面渲染
+  timeout: 2000
 })
 
 axiosInstance.interceptors.request.use(
@@ -61,7 +62,10 @@ axiosInstance.interceptors.response.use(
       })
       return Promise.reject(error)
     }
-    showToast('网络异常，请稍后重试')
+    // 超时不弹 Toast，避免阻塞页面渲染
+    if (error.code !== 'ECONNABORTED') {
+      showToast('网络异常，请稍后重试')
+    }
     return Promise.reject(error)
   }
 )

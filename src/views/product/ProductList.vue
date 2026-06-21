@@ -136,7 +136,7 @@ async function loadProducts() {
       productList.value = (res as unknown as { list: Product[] }).list || []
     } else if (keyword.value) {
       const res = await searchProducts(keyword.value)
-      productList.value = res.list || []
+      productList.value = res?.list || res.list || []
     } else {
       const res = await getProductList('')
       const data = (res as unknown as { data: { list: Product[] } }).data

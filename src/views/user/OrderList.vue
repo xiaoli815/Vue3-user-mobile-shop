@@ -43,8 +43,25 @@
             <span class="price">{{ formatPrice(order.totalAmount) }}</span></span
           >
           <div class="order-actions">
-            <van-button size="small" plain type="danger" @click="handleCancelOrder(order.orderId)">取消订单</van-button>
-            <van-button size="small" type="danger">立即付款</van-button>
+            <van-button 
+            v-if="order.status === 'pending_pay'" 
+            size="small" 
+            plain 
+            type="danger" 
+            @click="handleCancelOrder(order.orderId)">
+            取消订单</van-button>
+            <van-button 
+            v-if="order.status === 'pending_pay'" 
+            size="small" 
+            type="danger" 
+            @click="handlePay(order.orderId)">
+            立即付款</van-button>
+            <van-button 
+            v-if="order.status === 'shipped'" 
+            size="small" 
+            type="danger" 
+            @click="handleConfirmReceipt(order.orderId)">
+            确认收货</van-button>
           </div>
         </div>
       </div>
@@ -58,7 +75,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, computed, ref } from 'vue'
+import { onMounted, computed, ref, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 import { showToast } from 'vant'
 import { OrderGoods } from '@/types/order'
@@ -74,13 +91,32 @@ const orderStore = useOrderStore()
 // 取消订单
 const handleCancelOrder = async (orderId: string) => {
   const res = await cancelOrder(parseInt(orderId))
-  console.log(res)
+  // console.log(res)
   // API 成功后同步更新本地 store 和 localStorage
   if (res && res.code === 200) {
     orderStore.updateOrderStatus(orderId, 'cancelled')
+    // 取消订单后要删除对应订单列表中的订单
+    orderStore.removeOrder(orderId)
+    // 刷新订单列表
+    nextTick(() => getOrderList())
     showToast('订单已取消')
   }
 }
+
+// 点击立即支付
+const handlePay = (orderId: string) => {
+  orderStore.updateOrderStatus(orderId, 'paid')
+  showToast('订单已付款')
+  nextTick(() => getOrderList())
+}
+
+// 确认收货
+const handleConfirmReceipt = (orderId: string) => {
+  orderStore.updateOrderStatus(orderId, 'completed')
+  showToast('订单已完成')
+  nextTick(() => getOrderList())
+}
+
 
 
 const STATUS_TEXT: Record<string, string> = {
@@ -140,17 +176,23 @@ onMounted(async () => {
 
   try {
     const res = await getOrderList()
-    // console.log(res)
     if (res && res.list) {
+      // B端 status 是数字，映射到 C端 字符串状态
+      const STATUS_MAP: Record<number, string> = {
+        1: 'pending_pay',
+        2: 'paid',
+        3: 'completed',
+        4: 'cancelled'
+      }
       res.list.forEach(backendOrder => {
         const exists = orderStore.orders.some(o => o.orderId === String(backendOrder.orderId))
         if (!exists) {
           orderStore.addOrder({
             orderId: String(backendOrder.orderId),
             createTime: backendOrder.createTime,
-            status: backendOrder.status as string || 'pending_pay',
-            goods: backendOrder.goodsList || [],
-            totalAmount: backendOrder.finalPrice || 0,
+            status: STATUS_MAP[backendOrder.status] || 'pending_pay',
+            goods: backendOrder.goods || [],
+            totalAmount: backendOrder.totalAmount || 0,
             address: null
           })
         }

@@ -2,15 +2,6 @@
   <div class="product-detail-page">
     <!-- 顶部导航 -->
     <van-nav-bar title="商品详情" left-arrow fixed placeholder @click-left="$router.back()">
-      <!-- 收藏 -->
-      <template #right>
-        <van-icon
-          :name="isFavorite ? 'like' : 'like-o'"
-          size="20"
-          :color="isFavorite ? '#ee0a24' : '#999'"
-          @click="getFavorite"
-        />
-      </template>
     </van-nav-bar>
 
     <!-- 商品图片轮播 -->
@@ -72,18 +63,19 @@
 
     <!-- 规格选择 -->
     <div class="spec-bar card">
-      <span class="spec-label">已选</span>
-      <span class="spec-text">{{ selectedSpecText || '颜色: 黑色 / 尺码: M' }}</span>
+      <span  v-if="selectedSpecText" class="spec-label">已选</span>
+      <span class="spec-text">{{ selectedSpecText || '请选择规格' }}</span>
       <van-icon name="arrow" @click="showSpec = !showSpec" />
     </div>
     <!-- 底部弹出 -->
     <SkuPopUp
       v-if="productDetail || (route.query.type === 'seckill' && seckillProductDetail)"
       v-model="showSpec"
-      :product="(route.query.type === 'seckill' ? seckillProductDetail : productDetail) as Product"
+      :product="(route.query.type === 'seckill' ? seckillProductDetail : productDetail) as skuProduct"
       :confirm-text="text"
       :discount-price="discountedPrice"
       confirm-type="danger"
+      @select="onSkuSelect"
       @confirm="handleBuy"
     />
 
@@ -121,7 +113,11 @@
         :badge="cartStore.items.length"
         @click="$router.push('/cart')"
       />
-      <van-action-bar-icon icon="like-o" text="收藏" />
+      <van-action-bar-icon 
+      icon="like" 
+      text="收藏" 
+      :color="isFavorite ? '#ee0a24' : '#999'"
+      @click="getFavorite"/>
       <van-action-bar-button type="warning" text="加入购物车" @click="handleAddCart" />
       <van-action-bar-button type="danger" text="立即购买" @click="handleDirectBuy" />
     </van-action-bar>
@@ -135,7 +131,7 @@ import { toggleFavorite as apiToggleFavorite, getProductDetail } from '@/api/pro
 import { getSeckillProductDetail } from '@/api/seckill'
 import type { SeckillItem } from '@/types/seckill'
 import { useRoute, useRouter } from 'vue-router'
-import type { Product, Sku, SpecItem } from '@/types/index'
+import type { Product, Sku, SpecItem, skuProduct } from '@/types/index'
 import SkuPopUp from '@/components/SkuPopUp.vue'
 import CouponPopUp from '@/components/CouponPopUp.vue'
 import { useUserStore } from '@/stores/user'
@@ -166,17 +162,50 @@ const text = ref('立即购买')
 
 // 收藏
 const isFavorite = ref<boolean>(false)
+
+// 获取当前商品的唯一标识和 Product 格式对象
+const getCurrentProductForFavorite = (): { id: number; product: Product } | null => {
+  if (route.query.type === 'seckill') {
+    const seckill = seckillProductDetail.value
+    if (!seckill) return null
+    // 秒杀商品用 goodsId 作为收藏标识
+    const product: Product = {
+      id: seckill.goodsId || seckill.seckillId,
+      name: seckill.title,
+      desc: seckill.description || '',
+      price: seckill.seckillPrice,
+      originalPrice: seckill.originalPrice,
+      sales: seckill.soldCount || 0,
+      stock: seckill.remainStock || 0,
+      image: seckill.mainImages?.[0] || seckill.image || '',
+      images: seckill.mainImages || [seckill.image],
+      mainImages: seckill.mainImages,
+      categoryId: 1,
+      tags: ['秒杀'],
+      isFlashSale: true,
+      flashSalePrice: seckill.seckillPrice,
+      isFavorite: false,
+      detail: seckill.description || '',
+      skus: [],
+    }
+    return { id: product.id, product }
+  }
+  if (!productDetail.value) return null
+  return { id: productDetail.value.id, product: productDetail.value }
+}
+
 const getFavorite = async () => {
-  if (!productDetail.value) {
+  const current = getCurrentProductForFavorite()
+  if (!current) {
     showToast('商品信息未加载')
     return
   }
 
   // 调用后端接口
-  await apiToggleFavorite(productDetail.value.id)
+  await apiToggleFavorite(current.id)
 
   // 更新 store（会自动持久化到 localStorage）
-  const newState = favoriteStore.toggleFavorite(productDetail.value)
+  const newState = favoriteStore.toggleFavorite(current.product)
   isFavorite.value = newState
 
   showToast(newState ? '收藏成功' : '取消收藏成功')
@@ -277,6 +306,10 @@ const fetchSeckillProductDetail = async () => {
     }
     const res = await getSeckillProductDetail(id)
     seckillProductDetail.value = res || undefined
+
+    // 初始化收藏状态（用 goodsId 判断）
+    const productId = res?.goodsId || res?.seckillId || 0
+    isFavorite.value = favoriteStore.isFavorite(productId)
   } catch (error) {
     console.error('获取秒杀商品详情失败:', error)
     showToast('获取秒杀商品详情失败')
@@ -294,6 +327,11 @@ const handleAddCart = () => {
   currentAction.value = 'cart'
   showSpec.value = true
   text.value = '加入购物车'
+}
+
+// 规格选择实时回调（弹窗中每选一个规格就更新）
+const onSkuSelect = (specText: string) => {
+  selectedSpecText.value = specText
 }
 
 // 确认规格选择后处理

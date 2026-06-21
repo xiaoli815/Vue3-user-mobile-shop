@@ -1,4 +1,5 @@
 <template>
+  <!-- 骨架屏组件 -->
   <div class="skeleton-card" :style="{ width: width, height: height }">
     <div class="skeleton-shimmer" />
   </div>

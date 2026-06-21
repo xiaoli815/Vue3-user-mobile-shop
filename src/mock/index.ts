@@ -13,7 +13,7 @@ import './search'
 
 // 设置全局延迟
 Mock.setup({
-  timeout: '200-500'
+  timeout: '50-150'
 })
 
 export default Mock

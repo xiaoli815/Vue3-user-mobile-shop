@@ -57,13 +57,19 @@
       </div>
     </div>
 
-    <!-- 轮播图 -->
+    <!-- 轮播图：首图优先加载，其余懒加载 -->
     <van-swipe :autoplay="3000" indicator-color="#ee0a24" class="banner-swipe">
-      <van-swipe-item v-for="item in banners" :key="item.id">
-        <div class="banner-placeholder">
-          <div class="banner-img">
-            <img :src="item.imageUrl" alt="轮播图" />
-          </div>
+      <van-swipe-item v-for="(item, idx) in banners" :key="item.id">
+        <div class="banner-img">
+          <img
+            :src="item.imageUrl"
+            alt="轮播图"
+            width="750"
+            height="422"
+            :loading="idx === 0 ? 'eager' : 'lazy'"
+            :fetchpriority="idx === 0 ? 'high' : 'low'"
+            decoding="async"
+          />
         </div>
       </van-swipe-item>
     </van-swipe>
@@ -96,7 +102,8 @@
           @click="goSeckillDetail(i.seckillId)"
         >
           <div class="flash-img-placeholder">
-            <img v-lazy="i.image" alt="秒杀商品图" />
+            <!--  显式 width/height 防止图片加载撑开布局（CLS ↓） -->
+            <img v-lazy="i.image" alt="秒杀商品图" width="80" height="80" />
           </div>
           <div class="flash-info">
             <p class="flash-name">{{ i.title }}</p>
@@ -133,12 +140,15 @@
       <div class="section-header">
         <span class="section-title">为你推荐</span>
       </div>
-      <!-- 骨架屏 -->
-      <div v-if="hotLoading" class="recommend-grid">
-        <Skeleton v-for="i in 4" :key="i" width="100%" height="240px" />
+      <!--  异步组件加载期间保持最小高度，防止内容区塌陷（CLS ↓） -->
+      <div class="recommend-content" style="min-height: 520px">
+        <!-- 骨架屏 -->
+        <div v-if="hotLoading" class="recommend-grid">
+          <Skeleton v-for="i in 4" :key="i" width="100%" height="240px" />
+        </div>
+        <!-- 商品列表 -->
+        <AsyncProductList :product-list="hotProducts" @click="goDetail" />
       </div>
-      <!-- 商品列表 -->
-      <AsyncProductList :product-list="hotProducts" @click="goDetail" />
     </div>
   </div>
   <tabbar></tabbar>
@@ -385,30 +395,24 @@ const goSeckillDetail = (id: number) => {
   margin: 8px 12px;
   border-radius: 8px;
   overflow: hidden;
-  aspect-ratio: 16/9;
-}
-
-.banner-placeholder {
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(135deg, #ff6b6b, #ffd93d);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #fff;
-  font-size: 14px;
+  aspect-ratio: 750 / 422;
+  /* 固定高度占位防止 CLS */
+  min-height: 187px;
+  background: #e8e8e8;
 }
 
 .banner-img {
   width: 100%;
   height: 100%;
   overflow: hidden;
+  background: #e8e8e8;
 }
 
 .banner-img img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  display: block;
 }
 
 .category-grid {
@@ -422,6 +426,13 @@ const goSeckillDetail = (id: number) => {
   margin: 8px 12px;
   border-radius: 8px;
   padding: 12px;
+}
+
+/* 固定最小高度防止 CLS */
+.flash-sale-section,
+.coupon-section,
+.recommend-section {
+  min-height: 120px;
 }
 
 .section-header {

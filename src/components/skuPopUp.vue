@@ -110,6 +110,7 @@ const confirmText = computed(() => {
 const emit = defineEmits<{
   (_: 'update:modelValue', __: boolean): void
   (_: 'confirm', __: { sku: Sku; quantity: number }): void
+  (_: 'select', __: string): void
 }>()
 
 // 使用计算属性处理 v-model
@@ -214,6 +215,8 @@ function selectSpec(name: string, value: string) {
   } else {
     selectedSpecs.value = { ...selectedSpecs.value, [name]: value }
   }
+  // 实时通知父组件当前选中的规格文本
+  emit('select', selectedSpecText.value)
 }
 
 // 增加数量

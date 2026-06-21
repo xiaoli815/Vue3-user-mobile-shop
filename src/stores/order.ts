@@ -46,6 +46,12 @@ export const useOrderStore = defineStore('order', () => {
     saveOrdersToStorage()
   }
 
+  // 删除订单
+  const removeOrder = (orderId: string) => {
+    orders.value = orders.value.filter(order => order.orderId !== orderId)
+    saveOrdersToStorage()
+  }
+
   // 获取订单列表
   const getOrders = computed(() => orders.value)
 
@@ -72,6 +78,7 @@ export const useOrderStore = defineStore('order', () => {
   return {
     orders,
     addOrder,
+    removeOrder,
     getOrders,
     getOrdersByStatus,
     updateOrderStatus,

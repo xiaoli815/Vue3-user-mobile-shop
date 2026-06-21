@@ -9,14 +9,14 @@ const userStore: Record<
   admin: {
     id: 1,
     nickname: '小明',
-    avatar: '/images/avatar.png',
+    avatar: '/images/avatar_sm.jpg',
     phone: '13800138000',
     password: '123456'
   },
   test: {
     id: 2,
     nickname: '测试用户',
-    avatar: '/images/avatar.png',
+    avatar: '/images/avatar_sm.jpg',
     phone: '13900139000',
     password: '123456'
   }

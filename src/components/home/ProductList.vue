@@ -2,7 +2,8 @@
   <div class="product-list">
     <div v-for="item in productList" :key="item.id" class="product-item" @click="goDetail(item.id)">
       <div class="product-img-wrapper">
-        <img v-lazy="item.image" alt="商品图片" />
+        <!-- 显式宽高比防止图片加载撑开布局（CLS ↓） -->
+        <img v-lazy="item.image" alt="商品图片" width="200" height="200" />
       </div>
       <div class="product-info">
         <p class="product-name">{{ item.name }}</p>

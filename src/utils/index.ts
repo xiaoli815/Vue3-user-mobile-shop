@@ -11,5 +11,6 @@ export * from './coupon'
 // 本地存储相关工具函数
 export * from './storage'
 
+
 // 请求相关工具函数
 export { default as request } from './request'
