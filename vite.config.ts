@@ -11,6 +11,8 @@ import { resolve } from 'path'
 const __dirname = fileURLToPath(new URL('.', import.meta.url))
 
 export default defineConfig({
+  // 相对路径，适配 GitHub Pages 子目录部署
+  base: './',
   plugins: [
     vue(),
     AutoImport({
