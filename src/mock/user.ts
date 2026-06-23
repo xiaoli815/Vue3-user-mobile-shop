@@ -1,11 +1,16 @@
 import Mock from 'mockjs'
 import { getToken, removeToken as clearToken } from '@/utils/token'
+import type { MockOptions } from './index'
 
-// ========== 用户数据存储 ==========
-const userStore: Record<
-  string,
-  { id: number; nickname: string; avatar: string; phone: string; password: string }
-> = {
+interface User {
+  id: number
+  nickname: string
+  avatar: string
+  phone: string
+  password: string
+}
+
+const userStore: Record<string, User> = {
   admin: {
     id: 1,
     nickname: '小明',
@@ -22,11 +27,9 @@ const userStore: Record<
   }
 }
 
-// 当前登录用户的 token 映射 - 从 localStorage 恢复
 const TOKEN_STORE_KEY = 'token_store'
 let tokenStore: Record<string, number> = {}
 
-// 从 localStorage 恢复 tokenStore
 const loadTokenStore = () => {
   try {
     const data = localStorage.getItem(TOKEN_STORE_KEY)
@@ -39,7 +42,6 @@ const loadTokenStore = () => {
   }
 }
 
-// 保存 tokenStore 到 localStorage
 const saveTokenStore = () => {
   try {
     localStorage.setItem(TOKEN_STORE_KEY, JSON.stringify(tokenStore))
@@ -48,18 +50,18 @@ const saveTokenStore = () => {
   }
 }
 
-// 初始化加载
 loadTokenStore()
 
-// ========== Mock 接口 ==========
+interface LoginBody {
+  username: string
+  password: string
+}
 
-// 登录
-Mock.mock('/api/user/login', 'post', (options: any) => {
-  let body = options.body
-  // 尝试解析请求体
+Mock.mock('/api/user/login', 'post', (options: MockOptions) => {
+  let body: LoginBody = { username: '', password: '' }
   try {
-    if (typeof body === 'string') {
-      body = JSON.parse(body)
+    if (typeof options.body === 'string') {
+      body = JSON.parse(options.body)
     }
   } catch (e) {
     console.error('解析请求体失败:', e)
@@ -71,7 +73,6 @@ Mock.mock('/api/user/login', 'post', (options: any) => {
   }
   const token = `token_${user.id}_${Date.now()}`
   tokenStore[token] = user.id
-  // 保存到 localStorage
   saveTokenStore()
   return {
     code: 200,
@@ -88,8 +89,11 @@ Mock.mock('/api/user/login', 'post', (options: any) => {
   }
 })
 
-// 获取当前用户信息
-Mock.mock('/api/user/info', 'get', (options: any) => {
+interface MockOptionsWithHeaders extends MockOptions {
+  headers?: Record<string, string>
+}
+
+Mock.mock('/api/user/info', 'get', (options: MockOptionsWithHeaders) => {
   let token = (options.headers || {}).Authorization || (options.headers || {}).authorization || ''
 
   if (!token) {
@@ -116,8 +120,7 @@ Mock.mock('/api/user/info', 'get', (options: any) => {
   }
 })
 
-// 退出登录
-Mock.mock('/api/user/logout', 'post', (options: any) => {
+Mock.mock('/api/user/logout', 'post', (options: MockOptionsWithHeaders) => {
   let token = (options.headers || {}).Authorization || (options.headers || {}).authorization || ''
 
   if (!token) {
@@ -125,7 +128,6 @@ Mock.mock('/api/user/logout', 'post', (options: any) => {
   }
 
   delete tokenStore[token.replace('Bearer ', '')]
-  // 保存到 localStorage
   saveTokenStore()
   clearToken()
   return { code: 200, msg: '退出成功', data: null }

@@ -10,10 +10,16 @@ import './order'
 import './user'
 import './seckill'
 import './search'
+import './shipping'
 
-// 设置全局延迟
 Mock.setup({
   timeout: '50-150'
 })
+
+export interface MockOptions {
+  url: string
+  type: string
+  body?: string
+}
 
 export default Mock

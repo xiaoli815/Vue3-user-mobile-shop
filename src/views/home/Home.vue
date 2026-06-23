@@ -143,11 +143,20 @@
       <!--  异步组件加载期间保持最小高度，防止内容区塌陷（CLS ↓） -->
       <div class="recommend-content" style="min-height: 520px">
         <!-- 骨架屏 -->
-        <div v-if="hotLoading" class="recommend-grid">
+        <div v-if="hotLoading && hotProducts.length === 0" class="recommend-grid">
           <Skeleton v-for="i in 4" :key="i" width="100%" height="240px" />
         </div>
         <!-- 商品列表 -->
         <AsyncProductList :product-list="hotProducts" @click="goDetail" />
+        <!-- 加载状态 -->
+        <div v-if="hotLoading && hotProducts.length > 0" class="loading-more">
+          <van-loading type="spinner" size="20" />
+          <span>加载中...</span>
+        </div>
+        <!-- 没有更多 -->
+        <div v-if="finished && hotProducts.length > 0" class="no-more">
+          没有更多了
+        </div>
       </div>
     </div>
   </div>
@@ -167,6 +176,7 @@ import { getSeckillList } from '@/api/seckill'
 import { getSearchSuggestions } from '@/api/search'
 import { useDebounce } from '@/composables/useDebounce'
 import { useSearchHistory } from '@/composables/useSearchHistory'
+import { usePagination } from '@/composables/usePagination'
 import Skeleton from '@/components/Skeleton.vue'
 
 
@@ -174,6 +184,14 @@ const router = useRouter()
 const keyword = ref('')
 const suggestions = ref<{ keyword: string; count: number }[]>([])
 const showSuggestions = ref(false)
+
+// 使用 usePagination 管理热门商品分页
+const {
+  list: hotProducts,
+  loading: hotLoading,
+  finished,
+  loadMore,
+} = usePagination<Product>({ pageSize: 10 })
 
 // 异步组件加载
 const AsyncProductList = defineAsyncComponent(() => import('@/components/home/ProductList.vue'))
@@ -247,22 +265,17 @@ const fetchSeckillList = async () => {
 }
 
 const banners = ref<Banner[]>([])
-const hotProducts = ref<Product[]>([])
-const hotLoading = ref(false)
-
 const categoryList = ref<CategoryItem[]>([])
 
-// 获取热门商品
+// 获取热门商品（使用 usePagination 的 loadMore）
 const fetchHotProducts = async () => {
-  hotLoading.value = true
-  try {
-    const res = await getHotProducts({ page: 1, pageSize: 10 })
-    hotProducts.value = res?.list || []
-  } catch (e) {
-    console.error('获取热门商品失败:', e)
-  } finally {
-    hotLoading.value = false
-  }
+  await loadMore(async (params) => {
+    const res = await getHotProducts(params)
+    return {
+      list: res?.list || [],
+      total: res?.total || 0
+    }
+  })
 }
 
 // banner 轮播图数据
@@ -287,11 +300,28 @@ const fetchCategoryList = async () => {
   }
 }
 
+
+// 监听滚动到底部加载更多
+const handleScroll = () => {
+  const scrollTop = window.scrollY || document.documentElement.scrollTop
+  const windowHeight = window.innerHeight
+  const documentHeight = document.documentElement.scrollHeight
+
+  // 距离底部 100px 时触发加载
+  if (scrollTop + windowHeight >= documentHeight - 100) {
+    if (!hotLoading.value && !finished.value) {
+      fetchHotProducts()
+    }
+  }
+}
+
 onMounted(() => {
   fetchHotProducts()
   fetchBanners()
   fetchCategoryList()
   fetchSeckillList()
+  // 监听滚动事件
+  window.addEventListener('scroll', handleScroll)
 })
 
 const goDetail = (id: number) => {
@@ -578,5 +608,22 @@ const goSeckillDetail = (id: number) => {
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+.loading-more {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px;
+  color: #999;
+  font-size: 14px;
+}
+
+.no-more {
+  text-align: center;
+  padding: 16px;
+  color: #ccc;
+  font-size: 13px;
 }
 </style>

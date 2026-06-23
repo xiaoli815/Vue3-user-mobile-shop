@@ -1,7 +1,8 @@
 import Mock from 'mockjs'
+import type { Address } from '../types/address'
+import type { MockOptions } from './index'
 
-// ========== 地址数据存储 ==========
-const addressList: any[] = [
+const addressList: Address[] = [
   {
     id: 1,
     receiverName: '张三',
@@ -45,21 +46,17 @@ const addressList: any[] = [
 ]
 let addressIdCounter = 5
 
-// ========== Mock 接口 ==========
-
-// 获取地址列表
 Mock.mock('/api/address/list', 'get', () => {
   return { code: 200, msg: 'success', data: addressList }
 })
 
-// 新增/编辑地址
-Mock.mock('/api/address/save', 'post', (options: any) => {
-  const body = JSON.parse(options.body)
+Mock.mock('/api/address/save', 'post', (options: MockOptions) => {
+  const body = JSON.parse(options.body || '{}')
   if (body.id) {
-    const idx = addressList.findIndex((a: any) => a.id === body.id)
+    const idx = addressList.findIndex((a) => a.id === body.id)
     if (idx > -1) {
       if (body.isDefault) {
-        addressList.forEach((a: any) => (a.isDefault = false))
+        addressList.forEach((a) => (a.isDefault = false))
       }
       addressList[idx] = { ...addressList[idx], ...body }
       return { code: 200, msg: '保存成功', data: addressList[idx] }
@@ -67,7 +64,7 @@ Mock.mock('/api/address/save', 'post', (options: any) => {
     return { code: 404, msg: '地址不存在', data: null }
   }
 
-  const newAddr = {
+  const newAddr: Address = {
     id: addressIdCounter++,
     receiverName: body.receiverName || body.name || '',
     phone: body.phone || '',
@@ -78,16 +75,15 @@ Mock.mock('/api/address/save', 'post', (options: any) => {
     isDefault: body.isDefault || false
   }
   if (newAddr.isDefault) {
-    addressList.forEach((a: any) => (a.isDefault = false))
+    addressList.forEach((a) => (a.isDefault = false))
   }
   addressList.push(newAddr)
   return { code: 200, msg: '添加成功', data: newAddr }
 })
 
-// 删除地址
-Mock.mock('/api/address/delete', 'post', (options: any) => {
-  const { id } = JSON.parse(options.body)
-  const idx = addressList.findIndex((a: any) => a.id === id)
+Mock.mock('/api/address/delete', 'post', (options: MockOptions) => {
+  const { id } = JSON.parse(options.body || '{}')
+  const idx = addressList.findIndex((a) => a.id === id)
   if (idx > -1) {
     addressList.splice(idx, 1)
     return { code: 200, msg: '删除成功', data: null }
@@ -95,11 +91,10 @@ Mock.mock('/api/address/delete', 'post', (options: any) => {
   return { code: 404, msg: '地址不存在', data: null }
 })
 
-// 设置默认地址
-Mock.mock('/api/address/setDefault', 'post', (options: any) => {
-  const { id } = JSON.parse(options.body)
-  addressList.forEach((a: any) => (a.isDefault = false))
-  const addr = addressList.find((a: any) => a.id === id)
+Mock.mock('/api/address/setDefault', 'post', (options: MockOptions) => {
+  const { id } = JSON.parse(options.body || '{}')
+  addressList.forEach((a) => (a.isDefault = false))
+  const addr = addressList.find((a) => a.id === id)
   if (addr) {
     addr.isDefault = true
     return { code: 200, msg: '设置成功', data: null }

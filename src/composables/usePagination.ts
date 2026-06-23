@@ -52,38 +52,17 @@ export function usePagination<T>(options: PaginationOptions = {}) {
     }
   }
 
-  /**
-   * 刷新数据（重置到第一页）
-   */
-  async function refresh(
-    fetchFn: (params: { page: number; pageSize: number }) => Promise<{ list: T[]; total: number }>,
-  ): Promise<void> {
-    refreshing.value = true
-    page.value = 1
-    finished.value = false
-
-    try {
-      const res = await fetchFn({ page: 1, pageSize: pageSize.value })
-      list.value = res.list || []
-      total.value = res.total || 0
-      page.value = 2
-
-      if (list.value.length >= total.value) {
-        finished.value = true
-      }
-    } finally {
-      refreshing.value = false
-    }
-  }
 
   /** 重置分页状态 */
-  function reset(): void {
+  const reset = () => {
     page.value = initialPage
     list.value = []
     total.value = 0
     finished.value = false
     loading.value = false
   }
+
+
 
   return {
     page,
@@ -96,7 +75,7 @@ export function usePagination<T>(options: PaginationOptions = {}) {
     hasMore,
     totalPages,
     loadMore,
-    refresh,
-    reset,
+    reset
+
   }
 }

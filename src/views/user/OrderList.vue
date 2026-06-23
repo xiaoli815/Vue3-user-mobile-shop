@@ -78,12 +78,13 @@
 import { onMounted, computed, ref, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 import { showToast } from 'vant'
-import { OrderGoods } from '@/types/order'
+import { OrderGoods, OrderData } from '@/types/order'
 import { Address } from '@/types/address'
 import { useOrderStore } from '@/stores/order'
 import { formatPrice } from '@/utils/price'
 import { getSessionStorage, removeSessionStorage } from '@/utils/storage'
-import { getOrderList, cancelOrder } from '@/api/order'
+import { getOrderList, cancelOrder, confirmReceipt } from '@/api/order'
+
 
 const route = useRoute()
 const orderStore = useOrderStore()
@@ -111,10 +112,13 @@ const handlePay = (orderId: string) => {
 }
 
 // 确认收货
-const handleConfirmReceipt = (orderId: string) => {
-  orderStore.updateOrderStatus(orderId, 'completed')
-  showToast('订单已完成')
-  nextTick(() => getOrderList())
+const handleConfirmReceipt = async (orderId: string) => {
+  const res = await confirmReceipt(parseInt(orderId))
+  if (res && res.code === 200) {
+    orderStore.updateOrderStatus(orderId, 'completed')
+    showToast('订单已完成')
+    nextTick(() => getOrderList())
+  }
 }
 
 
@@ -150,6 +154,7 @@ const filteredOrders = computed(() => {
   return orderStore.orders.filter(order => order.status === activeTab.value)
 })
 
+
 interface Order {
   orderId: string
   createTime: string
@@ -158,7 +163,6 @@ interface Order {
   totalAmount: number
   address: Address | null
 }
-
 // 计算订单商品总数
 const getTotalCount = (goods: OrderGoods[]): number => {
   return goods.reduce((sum, item) => sum + item.count, 0)
@@ -174,33 +178,29 @@ onMounted(async () => {
     removeSessionStorage('recentOrder')
   }
 
-  try {
+    // 加载订单列表
     const res = await getOrderList()
     if (res && res.list) {
-      // B端 status 是数字，映射到 C端 字符串状态
-      const STATUS_MAP: Record<number, string> = {
-        1: 'pending_pay',
-        2: 'paid',
-        3: 'completed',
-        4: 'cancelled'
-      }
-      res.list.forEach(backendOrder => {
-        const exists = orderStore.orders.some(o => o.orderId === String(backendOrder.orderId))
+      // 如果订单状态为取消，则不添加到订单列表
+      const cancelledOrders = res.list.filter(order => order.status === 'cancelled')
+      cancelledOrders.forEach(order => {
+        orderStore.removeOrder(String(order.orderId))
+      })
+
+      res.list.forEach(order => {
+        const exists = orderStore.orders.some(o => o.orderId === String(order.orderId))
         if (!exists) {
           orderStore.addOrder({
-            orderId: String(backendOrder.orderId),
-            createTime: backendOrder.createTime,
-            status: STATUS_MAP[backendOrder.status] || 'pending_pay',
-            goods: backendOrder.goods || [],
-            totalAmount: backendOrder.totalAmount || 0,
-            address: null
+            orderId: String(order.orderId),
+            createTime: order.createTime,
+            status: order.status,
+            goods: order.goodsList || [],
+            totalAmount: order.finalPrice || 0,
+            address: null as OrderData['address']
           })
         }
       })
     }
-  } catch (error) {
-    console.error('同步后端订单失败:', error)
-  }
 })
 </script>
 
@@ -266,7 +266,7 @@ onMounted(async () => {
 .order-name {
   font-size: 13px;
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }

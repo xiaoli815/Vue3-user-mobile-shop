@@ -47,9 +47,7 @@ export default defineConfig({
   server: {
     port: 3000,
     open: true,
-    //  关闭 dev sourcemap，减少模块转换耗时（FCP ↓ 1-2s）
-    sourcemap: false,
-    // 预热常用模块，Vite 启动时预转换避免首次请求才编译
+    
     warmup: {
       clientFiles: [
         './src/main.ts',
@@ -57,18 +55,6 @@ export default defineConfig({
         './src/App.vue',
         './src/router/index.ts',
       ]
-    },
-    proxy: {
-      '/api': {
-        target: 'http://localhost:3001',
-        changeOrigin: true,
-        secure: false,
-        rewrite: (path) => path.replace(/^\/api/, '/api/c')
-      },
-      '/product/uploads': {
-        target: 'http://localhost:3001',
-        changeOrigin: true
-      }
     }
   },
   //  优化依赖预构建，减少浏览器请求数

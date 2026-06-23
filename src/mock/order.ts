@@ -1,58 +1,74 @@
 import Mock from 'mockjs'
+import type { MockOptions } from './index'
+import type { Order, OrderGoods } from '../types/order'
+import { CartItem } from '@/types'
 
-// ========== 订单数据存储 ==========
-const orderList: any[] = []
-let orderIdCounter = 1
+const ORDER_STORAGE_KEY = 'order_list_anonymous'
+const COUNTER_STORAGE_KEY = 'order_id_counter'
 
-// ========== Mock 接口 ==========
-
-// 订单预览（确认下单前）
-Mock.mock('/api/order/pre', 'post', (options: any) => {
-  const { cartIds } = JSON.parse(options.body)
-
-  // 从 localStorage 获取购物车数据（支持带用户标识的key）
-  let goodsList: any[] = []
+function getOrderList(): Order[] {
   try {
-    // 先尝试带用户标识的 key（如 cart_items_user_guest）
-    let cartData = localStorage.getItem('cart_items_user_guest')
-    if (!cartData) {
-      // 如果没有，尝试其他可能的 key
-      const keys = Object.keys(localStorage).filter(k => k.startsWith('cart_items_'))
-      if (keys.length > 0) {
-        cartData = localStorage.getItem(keys[0])
-      }
+    const data = localStorage.getItem(ORDER_STORAGE_KEY)
+    if (data) {
+      return JSON.parse(data) as Order[]
     }
-    if (!cartData) {
-      // 最后尝试不带后缀的旧 key
-      cartData = localStorage.getItem('cart_items')
-    }
-    if (cartData) {
-      const cartItems = JSON.parse(cartData)
+  } catch {
+    /* ignore */
+  }
+  return []
+}
 
-      // 如果传入了 cartIds，筛选对应的商品
+function saveOrderList(data: Order[]) {
+  localStorage.setItem(ORDER_STORAGE_KEY, JSON.stringify(data))
+}
+
+function getOrderIdCounter(): number {
+  try {
+    const data = localStorage.getItem(COUNTER_STORAGE_KEY)
+    if (data) {
+      return parseInt(data, 10) || 1
+    }
+  } catch {
+    /* ignore */
+  }
+  return 1
+}
+
+function saveOrderIdCounter(value: number) {
+  localStorage.setItem(COUNTER_STORAGE_KEY, String(value))
+}
+
+Mock.mock('/api/order/pre', 'post', (options: MockOptions) => {
+  const { cartIds } = JSON.parse(options.body || '{}')
+
+  let goodsList: OrderGoods[] = []
+  try {
+    const cartData = localStorage.getItem('cart_items_anonymous')
+    if (cartData) {
+      const cartItems: CartItem[] = JSON.parse(cartData)
+
       if (cartIds && cartIds.length > 0) {
         goodsList = cartItems
-          .filter((item: any) => cartIds.includes(item.cartId))
-          .map((item: any) => ({
+          .filter((item) => cartIds.includes(item.cartId))
+          .map((item) => ({
             goodsId: item.goodsId,
             skuId: item.skuId,
-            name: item.name,
-            image: item.image,
-            price: item.price,
-            count: item.count,
+            name: item.name || '',
+            image: item.image || '',
+            price: item.price || 0,
+            count: item.count || 1,
             specText: item.specText || '暂无规格'
           }))
       } else {
-        // 如果没有传入 cartIds，返回所有选中的商品
         goodsList = cartItems
-          .filter((item: any) => item.checked)
-          .map((item: any) => ({
+          .filter((item) => item.checked)
+          .map((item) => ({
             goodsId: item.goodsId,
             skuId: item.skuId,
-            name: item.name,
-            image: item.image,
-            price: item.price,
-            count: item.count,
+            name: item.name || '',
+            image: item.image || '',
+            price: item.price || 0,
+            count: item.count || 1,
             specText: item.specText || '暂无规格'
           }))
       }
@@ -60,7 +76,7 @@ Mock.mock('/api/order/pre', 'post', (options: any) => {
   } catch (error) {
     console.error('读取购物车数据失败:', error)
   }
-  const totalOriginalPrice = goodsList.reduce((sum, g) => sum + g.price * g.count, 0)
+  const totalOriginalPrice = goodsList.reduce((sum, g) => sum + (g.price || 0) * (g.count || 0), 0)
   const discountPrice = 0
   const freightPrice = 0
 
@@ -77,58 +93,50 @@ Mock.mock('/api/order/pre', 'post', (options: any) => {
   }
 })
 
-// 提交订单
-Mock.mock('/api/order/submit', 'post', (options: any) => {
-  const { addressId, couponId, remark } = JSON.parse(options.body)
+Mock.mock('/api/order/submit', 'post', (options: MockOptions) => {
+  const { addressId, couponId, remark, goodsList, goods } = JSON.parse(options.body || '{}')
   const now = new Date().toISOString()
-  const orderId = orderIdCounter++
+  const orderIdCounter = getOrderIdCounter()
+  const orderId = orderIdCounter
   const orderNo = `ORD${Date.now()}${String(orderId).padStart(4, '0')}`
 
-  const newOrder = {
+  const orderGoodsList: OrderGoods[] = goodsList || goods || []
+
+  const totalPrice = orderGoodsList.reduce((sum, g) => sum + (g.price || 0) * (g.count || 0), 0)
+
+  const newOrder: Order = {
     orderId,
     orderNo,
     status: 'pending_pay',
     createTime: now,
-    finalPrice: 10898,
-    goodsList: [
-      {
-        name: 'iPhone 15 Pro Max',
-        image: '/images/product/phone/product1.jpg',
-        price: 8999,
-        count: 1,
-        specText: '曜石黑 / M'
-      },
-      {
-        name: 'AirPods Pro 2',
-        image: '/images/product/phone/product13.jpg',
-        price: 1899,
-        count: 1,
-        specText: '白色 / 标准版'
-      }
-    ],
+    finalPrice: totalPrice,
+    goodsList: orderGoodsList,
     addressId,
     couponId,
     remark,
     payTime: '',
     shipTime: '',
     confirmTime: '',
-    totalOriginalPrice: 10898,
+    totalOriginalPrice: totalPrice,
     discountPrice: 0,
     freightPrice: 0
   }
 
+  const orderList = getOrderList()
   orderList.unshift(newOrder)
+  saveOrderList(orderList)
+  saveOrderIdCounter(orderIdCounter + 1)
+
   return { code: 200, msg: '下单成功', data: { orderId } }
 })
 
-// 订单列表（分页，按状态筛选）
-Mock.mock('/api/order/list', 'get', (options: any) => {
+Mock.mock('/api/order/list', 'get', (options: MockOptions) => {
   const url = new URL(options.url, 'http://localhost')
   const status = url.searchParams.get('status') || ''
   const page = Number(url.searchParams.get('page') || 1)
   const pageSize = Number(url.searchParams.get('pageSize') || 10)
 
-  let list = [...orderList]
+  let list = getOrderList()
   if (status) {
     list = list.filter(o => o.status === status)
   }
@@ -144,25 +152,43 @@ Mock.mock('/api/order/list', 'get', (options: any) => {
   }
 })
 
-// 取消订单
-Mock.mock('/api/order/cancel', 'post', (options: any) => {
-  const { orderId } = JSON.parse(options.body)
-  const order = orderList.find((o: any) => o.orderId === orderId)
+Mock.mock('/api/order/cancel', 'post', (options: MockOptions) => {
+  const { orderId, orderid } = JSON.parse(options.body || '{}')
+  const id = orderId || orderid
+  const orderList = getOrderList()
+  const order = orderList.find((o) => String(o.orderId) === String(id))
   if (order) {
     order.status = 'cancelled'
+    saveOrderList(orderList)
     return { code: 200, msg: '订单已取消', data: null }
   }
   return { code: 404, msg: '订单不存在', data: null }
 })
 
-// 确认收货
-Mock.mock('/api/order/confirm', 'post', (options: any) => {
-  const { orderId } = JSON.parse(options.body)
-  const order = orderList.find((o: any) => o.orderId === orderId)
+Mock.mock('/api/order/confirm', 'post', (options: MockOptions) => {
+  const { orderId, orderid } = JSON.parse(options.body || '{}')
+  const id = orderId || orderid
+  const orderList = getOrderList()
+  const order = orderList.find((o) => String(o.orderId) === String(id))
   if (order) {
     order.status = 'completed'
     order.confirmTime = new Date().toISOString()
+    saveOrderList(orderList)
     return { code: 200, msg: '已确认收货', data: null }
+  }
+  return { code: 404, msg: '订单不存在', data: null }
+})
+
+Mock.mock('/api/order/pay', 'post', (options: MockOptions) => {
+  const { orderId, orderid } = JSON.parse(options.body || '{}')
+  const id = orderId || orderid
+  const orderList = getOrderList()
+  const order = orderList.find((o) => String(o.orderId) === String(id))
+  if (order) {
+    order.status = 'paid'
+    order.payTime = new Date().toISOString()
+    saveOrderList(orderList)
+    return { code: 200, msg: '支付成功', data: null }
   }
   return { code: 404, msg: '订单不存在', data: null }
 })

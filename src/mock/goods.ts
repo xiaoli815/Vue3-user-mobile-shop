@@ -1,19 +1,17 @@
 import Mock from 'mockjs'
 import { productList } from './product'
+import type { MockOptions } from './index'
+import type { Product } from '../types/product'
 
-// ========== Mock 接口 ==========
-
-// 获取商品详情（支持带斜杠和不带斜杠的URL）
-Mock.mock(/\/api\/goods\/detail\/?/, 'get', (options: any) => {
+Mock.mock(/\/api\/goods\/detail\/?/, 'get', (options: MockOptions) => {
   const url = new URL(options.url, 'http://localhost')
   const goodsId = Number(url.searchParams.get('goodsId') || 0)
 
-  const product = productList.find((p: any) => p.id === goodsId)
+  const product = productList.find((p: Product) => p.id === goodsId)
   if (!product) {
     return { code: 404, msg: '商品不存在', data: null }
   }
 
-  // 转换为 goods/detail 需要的格式
   const data = {
     id: product.id,
     spuId: product.id,
@@ -25,11 +23,11 @@ Mock.mock(/\/api\/goods\/detail\/?/, 'get', (options: any) => {
     stock: product.stock,
     image: product.image,
     mainImages: product.images,
-    skuList: product.skus.map((sku: any) => ({
+    skuList: product.skus.map((sku) => ({
       skuId: sku.id,
       price: sku.price,
       stock: sku.stock,
-      specs: sku.specs.map((s: any) => ({ specName: s.name, specValue: s.value }))
+      specs: sku.specs.map((s) => ({ specName: s.name, specValue: s.value }))
     })),
     content: product.detail || '',
     categoryId: product.categoryId,

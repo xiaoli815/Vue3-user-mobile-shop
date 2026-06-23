@@ -1,74 +1,107 @@
 import Mock from 'mockjs'
+import type { CartItem } from '../types/cart'
+import type { MockOptions } from './index'
 
-// ========== 购物车数据存储 ==========
-let cartData: any[] = []
-let cartIdCounter = 1
+function getStorageKey(): string {
+  try {
+    const token = localStorage.getItem('token')
+    const userId = localStorage.getItem('user_id')
+    if (token && userId) {
+      return `cart_items_user_${userId}`
+    }
+  } catch {
+    /* ignore */
+  }
+  return 'cart_items_anonymous'
+}
 
-// ========== Mock 接口 ==========
+function getCartData(): CartItem[] {
+  try {
+    const data = localStorage.getItem(getStorageKey())
+    if (data) {
+      return JSON.parse(data) as CartItem[]
+    }
+  } catch {
+    /* ignore */
+  }
+  return []
+}
 
-// 获取购物车列表 (匹配 GET /cart)
+function saveCartData(data: CartItem[]) {
+  localStorage.setItem(getStorageKey(), JSON.stringify(data))
+}
+
 Mock.mock('/api/cart', 'get', () => {
-  const list = cartData.map(item => ({
-    cartId: item.cartId || item.id,
-    skuId: item.skuId || 0,
-    goodsId: item.productId || item.goodsId || 0,
-    name: item.productName || item.name || '',
-    image: item.productImage || item.image || '',
-    price: item.price || 0,
-    specText: item.specs ? item.specs.map((s: any) => s.value).join(' / ') : item.specText || '',
-    count: item.quantity || item.count || 1,
-    stock: item.stock || 999,
-    checked: item.checked !== undefined ? item.checked : item.isChecked || true
-  }))
-  return { code: 200, msg: 'success', data: list }
+  const cartData = getCartData()
+  return { code: 200, msg: 'success', data: cartData }
 })
 
-// 加入购物车 (匹配 POST /cart/add)
-Mock.mock('/api/cart/add', 'post', (options: any) => {
-  const body = JSON.parse(options.body)
-  const { skuId, goodsId, count } = body
+Mock.mock('/api/cart/add', 'post', (options: MockOptions) => {
+  const body = JSON.parse(options.body || '{}')
+  const { skuId, goodsId, count, name, image, price, specText } = body
+
+  const cartData = getCartData()
 
   if (skuId && goodsId) {
     const exist = cartData.find(item => item.skuId === skuId && item.goodsId === goodsId)
     if (exist) {
       exist.count = (exist.count || 0) + (count || 1)
     } else {
+      const maxId = Math.max(...cartData.map(item => item.cartId || 0), 0)
       cartData.push({
-        cartId: cartIdCounter++,
+        cartId: maxId + 1,
         skuId,
         goodsId,
         count: count || 1,
         checked: true,
-        name: body.name || '',
-        image: body.image || '',
-        price: body.price || 0,
-        specText: body.specText || ''
+        name: name || '',
+        image: image || '',
+        price: price || 0,
+        specText: specText || ''
       })
     }
+    saveCartData(cartData)
     return { code: 200, msg: '加入购物车成功', data: null }
   }
 
-  // 旧格式兼容
-  const exist = cartData.find((item: any) => item.id === body.id)
-  if (exist) {
-    exist.quantity = (exist.quantity || 0) + (body.quantity || 1)
-  } else {
-    cartData.push({ ...body, checked: true })
-  }
-  return { code: 200, msg: 'success', data: null }
+  return { code: 400, msg: '参数错误', data: null }
 })
 
-// 清空购物车 (匹配 POST /cart/clear)
-Mock.mock('/api/cart/clear', 'post', (options: any) => {
-  const body = JSON.parse(options.body)
+Mock.mock('/api/cart/clear', 'post', (options: MockOptions) => {
+  const body = JSON.parse(options.body || '{}')
   const { ids } = body
 
+  let cartData = getCartData()
+
   if (ids && ids.length) {
-    // 删除指定的商品
     cartData = cartData.filter(i => !ids.includes(Number(i.cartId)))
   } else {
-    // 清空所有
     cartData = []
   }
+  saveCartData(cartData)
   return { code: 200, msg: '操作成功', data: null }
+})
+
+Mock.mock('/api/cart/update', 'post', (options: MockOptions) => {
+  const body = JSON.parse(options.body || '{}')
+  const { cartId, count, checked } = body
+
+  const cartData = getCartData()
+  const item = cartData.find(i => i.cartId === cartId)
+  if (item) {
+    if (count !== undefined) item.count = count
+    if (checked !== undefined) item.checked = checked
+    saveCartData(cartData)
+  }
+  return { code: 200, msg: '操作成功', data: null }
+})
+
+Mock.mock('/api/cart/delete', 'post', (options: MockOptions) => {
+  const body = JSON.parse(options.body || '{}')
+  const { ids } = body
+
+  let cartData = getCartData()
+  cartData = cartData.filter(i => !ids.includes(Number(i.cartId)))
+  saveCartData(cartData)
+  return { code: 200, msg: '删除成功', data: null }
 })

@@ -8,7 +8,7 @@
       <div
         class="filter-item"
         :class="{ active: sortType === 'default' }"
-        @click="sortType = 'default'"
+        @click="handleSortChange('default')"
       >
         综合
       </div>
@@ -22,7 +22,7 @@
       <div
         class="filter-item"
         :class="{ active: sortType === 'sales' }"
-        @click="sortType = 'sales'"
+        @click="handleSortChange('sales')"
       >
         销量
       </div>
@@ -56,21 +56,32 @@
     <!-- 空状态 -->
     <van-empty v-if="productList.length === 0 && !loading" description="暂无商品" />
 
-    <!-- 加载状态 -->
-    <van-loading v-if="loading" class="loading-center" />
+    <!-- 首次加载 -->
+    <van-loading v-if="loading && productList.length === 0" class="loading-center" />
+
+    <!-- 加载更多 -->
+    <div v-if="loading && productList.length > 0" class="loading-more">
+      <van-loading type="spinner" size="20" />
+      <span>加载中...</span>
+    </div>
+
+    <!-- 没有更多 -->
+    <div v-if="finished && productList.length > 0" class="no-more">
+      没有更多了
+    </div>
   </div>
   <Tabbar></Tabbar>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch, computed } from 'vue'
+import { ref, onMounted, onUnmounted, watch, computed } from 'vue'
 import { getCategoryGoods } from '@/api/category'
 import Tabbar from '@/components/Tabbar.vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Product } from '@/types/index'
 import { getProductList } from '@/api/product'
 import { searchProducts } from '@/api/search'
-import { useLoading } from '@/composables/useLoading'
+import { usePagination } from '@/composables/usePagination'
 
 const route = useRoute()
 const router = useRouter()
@@ -78,8 +89,15 @@ const router = useRouter()
 const keyword = ref((route.query.keyword as string) || '')
 const categoryId = ref(Number(route.query.categoryId) || 0)
 const sortType = ref('default')
-const productList = ref<Product[]>([])
-const { loading, withLoading } = useLoading()
+
+// 使用 usePagination 管理商品分页
+const {
+  list: productList,
+  loading,
+  finished,
+  loadMore,
+  reset
+} = usePagination<Product>({ pageSize: 4 })
 
 // 监听路由变化
 watch(
@@ -87,6 +105,7 @@ watch(
   query => {
     keyword.value = (query.keyword as string) || ''
     categoryId.value = Number(query.categoryId) || 0
+    reset()
     loadProducts()
   },
   { immediate: false }
@@ -96,17 +115,27 @@ watch(
 function onSearch(val: string) {
   router.push(`/product/list?keyword=${encodeURIComponent(val)}`)
 }
-// 点击价格时切换排序状态
+
+// 切换价格排序
 const togglePriceSort = () => {
   if (sortType.value === 'default' || sortType.value === 'price_desc') {
     sortType.value = 'price_asc'
   } else {
     sortType.value = 'price_desc'
   }
+  reset()
+  loadProducts()
+}
+
+// 切换排序
+const handleSortChange = (type: string) => {
+  if (sortType.value === type) return
+  sortType.value = type
+  reset()
+  loadProducts()
 }
 
 // 根据排序类型对商品列表进行排序
-// 使用 toSorted 避免产生不必要的数组拷贝（ES2023）
 const sortedProductList = computed(() => {
   switch (sortType.value) {
     case 'price_asc':
@@ -130,23 +159,51 @@ function goDetail(id: number) {
 
 // 加载商品
 async function loadProducts() {
-  await withLoading(async () => {
+  await loadMore(async (params) => {
+    let res: any
+    let list: Product[] = []
+    let total = 0
+
     if (categoryId.value > 0) {
-      const res = await getCategoryGoods({ categoryId: categoryId.value })
-      productList.value = (res as unknown as { list: Product[] }).list || []
+      res = await getCategoryGoods({ categoryId: categoryId.value, ...params })
+      list = res?.list || []
+      total = res?.total || 0
     } else if (keyword.value) {
-      const res = await searchProducts(keyword.value)
-      productList.value = res?.list || res.list || []
+      res = await searchProducts(keyword.value)
+      list = res?.list || []
+      total = res?.total || 0
     } else {
-      const res = await getProductList('')
-      const data = (res as unknown as { data: { list: Product[] } }).data
-      productList.value = data.list || []
+      res = await getProductList('')
+      const data = (res as unknown as { data: { list: Product[]; total: number } }).data
+      list = data.list || []
+      total = data.total || 0
     }
+
+    return { list, total }
   })
+}
+
+// 监听滚动到底部加载更多
+const handleScroll = () => {
+  const scrollTop = window.scrollY || document.documentElement.scrollTop
+  const windowHeight = window.innerHeight
+  const documentHeight = document.documentElement.scrollHeight
+
+  // 距离底部 100px 时触发加载
+  if (scrollTop + windowHeight >= documentHeight - 100) {
+    if (!loading.value && !finished.value) {
+      loadProducts()
+    }
+  }
 }
 
 onMounted(() => {
   loadProducts()
+  window.addEventListener('scroll', handleScroll)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('scroll', handleScroll)
 })
 </script>
 
@@ -162,6 +219,9 @@ onMounted(() => {
   background: #fff;
   padding: 0 16px;
   border-bottom: 1px solid #eee;
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 
 .filter-item {
@@ -232,7 +292,7 @@ span.active {
   font-size: 13px;
   line-height: 1.4;
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -269,5 +329,22 @@ span.active {
   display: flex;
   justify-content: center;
   padding: 20px;
+}
+
+.loading-more {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px;
+  color: #999;
+  font-size: 14px;
+}
+
+.no-more {
+  text-align: center;
+  padding: 16px;
+  color: #ccc;
+  font-size: 13px;
 }
 </style>

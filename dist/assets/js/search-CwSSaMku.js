@@ -1,0 +1,1 @@
+import{r as e}from"./request-BETsyR3e.js";const o=()=>e.get("/category/list").then(t=>t.data),g=t=>e.get("/category/goods",{params:t}).then(r=>r.data);function n(t){return e.get("/search/suggestions",{params:{keyword:t}})}function c(t,r=1,s=20){return e.get("/search/products",{params:{keyword:t,page:r,pageSize:s}})}export{n as a,g as b,o as g,c as s};

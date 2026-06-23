@@ -1,0 +1,1 @@
+import{r as e}from"./request-BETsyR3e.js";const o=r=>e.get("/order/list",{params:{status:r}}).then(t=>t.data),a=r=>e.post("/order/submit",r).then(t=>t.data),d=r=>e.post("/order/cancel",{orderid:r}).then(t=>t),c=r=>e.post("/order/confirm",{orderid:r}).then(t=>t);export{c as a,d as c,o as g,a as s};

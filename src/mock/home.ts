@@ -1,7 +1,7 @@
 import Mock from 'mockjs'
 import { productList } from './product'
+import type { MockOptions } from './index'
 
-// ========== 轮播图数据 ==========
 const banners = [
   { id: 1, imageUrl: '/images/banner1.jpg', link: '/product/list?category=1' },
   { id: 2, imageUrl: '/images/banner2.jpg', link: '/product/list?category=2' },
@@ -9,8 +9,6 @@ const banners = [
   { id: 4, imageUrl: '/images/banner4.jpg', link: '/flash' }
 ]
 
-// ========== Mock 接口 ==========
-// 轮播图数据
 Mock.mock('/api/home/banners', 'get', () => {
   return {
     code: 200,
@@ -19,8 +17,7 @@ Mock.mock('/api/home/banners', 'get', () => {
   }
 })
 
-// 获取热销商品（分页）
-Mock.mock(/\/api\/home\/hot/, 'get', (options: any) => {
+Mock.mock(/\/api\/home\/hot/, 'get', (options: MockOptions) => {
   const url = new URL(options.url, 'http://localhost')
   const page = Math.max(Number(url.searchParams.get('page')) || 1, 1)
   const pageSize = Math.min(Math.max(Number(url.searchParams.get('pageSize')) || 10, 1), 20)

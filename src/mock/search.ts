@@ -1,16 +1,30 @@
 import Mock from 'mockjs'
+import type { MockOptions } from './index'
 
-// 模拟搜索建议数据
-Mock.mock(/\/api\/search\/suggestions/, 'get', (options: { url: string }) => {
+interface SearchSuggestion {
+  keyword: string
+  count: number
+}
+
+interface SearchProduct {
+  id: number
+  name: string
+  price: number
+  originalPrice: number
+  image: string
+  sales: number
+  tags: string[]
+}
+
+Mock.mock(/\/api\/search\/suggestions/, 'get', (options: MockOptions) => {
   const url = new URL(options.url, 'http://localhost')
   const keyword = url.searchParams.get('keyword') || ''
 
   if (!keyword.trim()) {
-    return []
+    return { code: 200, msg: 'success', data: [] }
   }
 
-  // 生成和关键词相关的建议
-  const suggestions = [
+  const suggestions: SearchSuggestion[] = [
     { keyword: `${keyword}手机`, count: 1234 },
     { keyword: `${keyword}电脑`, count: 890 },
     { keyword: `${keyword}耳机`, count: 567 },
@@ -18,25 +32,24 @@ Mock.mock(/\/api\/search\/suggestions/, 'get', (options: { url: string }) => {
     { keyword: `${keyword}数据线`, count: 234 },
   ]
 
-  return suggestions
+  return { code: 200, msg: 'success', data: suggestions }
 })
 
-// 模拟搜索商品结果
-Mock.mock(/\/api\/search\/products/, 'get', (options: { url: string }) => {
+Mock.mock(/\/api\/search\/products/, 'get', (options: MockOptions) => {
   const url = new URL(options.url, 'http://localhost')
   const keyword = url.searchParams.get('keyword') || ''
   const page = Number(url.searchParams.get('page')) || 1
   const pageSize = Number(url.searchParams.get('pageSize')) || 20
 
   if (!keyword.trim()) {
-    return { list: [], total: 0 }
+    return { code: 200, msg: 'success', data: { list: [], total: 0 } }
   }
 
   const total = 50
   const start = (page - 1) * pageSize
   const end = Math.min(start + pageSize, total)
 
-  const list = Array.from({ length: end - start }, (_, i) => ({
+  const list: SearchProduct[] = Array.from({ length: end - start }, (_, i) => ({
     id: 1000 + start + i,
     name: `${keyword}商品${start + i + 1}`,
     price: Mock.Random.float(9, 999, 2, 2),
@@ -46,5 +59,5 @@ Mock.mock(/\/api\/search\/products/, 'get', (options: { url: string }) => {
     tags: ['热销', '推荐'].slice(0, Mock.Random.integer(1, 2)),
   }))
 
-  return { list, total }
+  return { code: 200, msg: 'success', data: { list, total } }
 })

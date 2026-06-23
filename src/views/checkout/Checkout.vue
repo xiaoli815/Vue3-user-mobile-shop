@@ -111,11 +111,7 @@
       :loading="submitting"
       @submit="handleSubmit"
     >
-      <span
-        >实付：<span class="price" style="font-size: 14px">{{
-          formatPrice(priceBreakdown.finalPrice)
-        }}</span></span
-      >
+      <span class="submit-bar-price">实付：<span class="price">{{formatPrice(priceBreakdown.finalPrice)}}</span></span>
     </van-submit-bar>
   </div>
 </template>
@@ -472,19 +468,39 @@ onMounted(async () => {
   await Promise.allSettled([fetchAddressList(), fetchCouponList()])
 
   const type = route.query.type
+  const cartIds = route.query.cartIds
 
-  if (type === 'seckill') {
+  if (cartIds) {
+    // 从购物车结算
+    const cartIdStr = Array.isArray(cartIds) ? cartIds[0] : cartIds
+    if (cartIdStr) {
+      const ids = cartIdStr.split(',').map(Number)
+      // 确保购物车数据已加载
+      await cartStore.loadFromServer()
+      const selectedItems = cartStore.items.filter(item => ids.includes(item.cartId || 0))
+      orderGoods.value = selectedItems.map(item => ({
+        goodsId: item.goodsId || 0,
+        skuId: item.skuId || 0,
+        name: item.name || '未命名商品',
+        image: item.image || '',
+        price: item.price || 0,
+        count: item.count || 1,
+        specText: item.specText || '暂无规格'
+      }))
+      totalOriginalPrice.value = orderGoods.value.reduce((sum, item) => sum + item.price * item.count, 0)
+    }
+  } else if (type === 'seckill') {
     const seckillId = Number(route.query.goodsId)
     const skuId = Number(route.query.skuId)
     const count = Number(route.query.count) || 1
     await fetchSeckillGoodsDetail(seckillId, skuId, count)
-  } else {
+  } else if (route.query.goodsId) {
     const goodsId = Number(route.query.goodsId)
     const skuId = Number(route.query.skuId)
     const count = Number(route.query.count) || 1
     await fetchGoodsDetail(goodsId, skuId, count)
   }
-
+// 加载店铺优惠券
   loadStoreCoupon()
   // 地址和商品都加载完成后，计算运费
   fetchShippingFee()
@@ -662,5 +678,32 @@ onMounted(async () => {
 
 .remark-section {
   margin-bottom: 8px;
+}
+
+.submit-bar-price {
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 14px;
+  max-width: 160px;
+  flex-shrink: 1;
+  min-width: 0;
+}
+
+.submit-bar-price .price {
+  font-size: clamp(12px, 3vw, 18px);
+  font-weight: bold;
+  color: #ee0a24;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+:deep(.van-submit-bar__text) {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 </style>

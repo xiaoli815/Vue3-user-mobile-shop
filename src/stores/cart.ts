@@ -32,7 +32,7 @@ export const useCartStore = defineStore('cart', () => {
     localStorage.setItem(getStorageKey(), JSON.stringify(items.value))
   }
 
-  // 从后端加载购物车数据
+  // 加载购物车数据
   async function loadFromServer() {
     loading.value = true
     try {
@@ -72,7 +72,7 @@ export const useCartStore = defineStore('cart', () => {
   async function addToCart(item: CartItem) {
     loading.value = true
     try {
-      // 调用后端 API
+      // 调用 API
       await apiAddToCart({
         goodsId: item.goodsId,
         skuId: item.skuId,
@@ -145,12 +145,12 @@ export const useCartStore = defineStore('cart', () => {
     return checkedItems.value.map(item => item.cartId)
   }
 
-  // 清空购物车（结算后调用后端）
+  // 清空购物车（结算后调用）
   async function clearCart() {
     loading.value = true
     try {
       const ids = checkedItems.value.map(item => String(item.cartId))
-      // 调用后端 API 清空已结算的商品
+      // 调用 API 清空已结算的商品
       await apiClearCart(ids)
 
       // 更新本地状态

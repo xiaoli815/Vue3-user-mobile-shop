@@ -1,0 +1,1 @@
+import{r as e}from"./request-BETsyR3e.js";const d=()=>e.get("/address/list"),r=s=>e.post("/address/save",{...s}),a=s=>e.delete(`/address/delete?id=${s}`),o=s=>e.post(`/address/setDefault/${s}`);export{r as a,a as d,d as g,o as s};

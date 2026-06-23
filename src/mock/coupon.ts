@@ -1,5 +1,7 @@
 import Mock from 'mockjs'
 import { getToken } from '@/utils/token'
+import type { MockOptions } from './index'
+import type { Coupon } from '../types/coupon'
 
 // ============================================================
 // 优惠券 Mock 数据生成规则
@@ -315,7 +317,7 @@ const generateExpiredCoupons = () => {
     endAt: pastDays(30), // 已过期30天
     expireTime: formatExpireTime(pastDays(30)),
     isUsable: false,
-    category: c.category as any,
+    category: c.category,
     productIds: [],
     stackRule: 'stackable',
     description: '该优惠券已过期',
@@ -375,7 +377,11 @@ loadTokenStore()
  * 从请求中提取用户 ID
  * 优先级：请求头 Authorization > headers.authorization > localStorage token
  */
-const getUserIdFromToken = (options: any): number => {
+interface MockOptionsWithHeaders extends MockOptions {
+  headers?: Record<string, string>
+}
+
+const getUserIdFromToken = (options: MockOptionsWithHeaders): number => {
   let token = (options.headers || {}).Authorization || (options.headers || {}).authorization || ''
 
   if (!token) {
@@ -389,24 +395,15 @@ const getUserIdFromToken = (options: any): number => {
     return userId
   }
 
-  return 1 // 默认用户ID
+  return 1
 }
 
-/**
- * 获取当前用户的已领取优惠券ID列表
- */
-const getCollectedCouponIds = (options: any): number[] => {
+const getCollectedCouponIds = (options: MockOptionsWithHeaders): number[] => {
   const userId = getUserIdFromToken(options)
   return userCollectedCoupons[userId] || []
 }
 
-/**
- * GET /coupons/product/:productId — 获取指定商品可用的优惠券（商品详情页使用）
- * 返回：店铺券 + 品牌券 + 品类券 + 单品券（不含平台券，平台券在结算页展示）
- * 规则：优惠券的 productIds 列表中包含该商品ID即为可用
- */
-Mock.mock(/\/coupons\/product\/\d+/, 'get', (options: any) => {
-  // 从 URL 路径中提取 productId
+Mock.mock(/\/coupons\/product\/\d+/, 'get', (options: MockOptionsWithHeaders) => {
   const match = options.url.match(/\/coupons\/product\/(\d+)/)
   const productId = match ? parseInt(match[1]) : 0
 
@@ -447,7 +444,7 @@ Mock.mock(/\/coupons\/product\/\d+/, 'get', (options: any) => {
  * GET /coupons/list — 获取所有优惠券列表（优惠券中心展示）
  * 返回所有优惠券，根据用户是否领取标记 collected 状态
  */
-Mock.mock(/\/coupons\/list/, 'get', (options: any) => {
+Mock.mock(/\/coupons\/list/, 'get', (options: MockOptionsWithHeaders) => {
   const collectedIds = getCollectedCouponIds(options)
   return {
     code: 200,
@@ -464,7 +461,7 @@ Mock.mock(/\/coupons\/list/, 'get', (options: any) => {
  * 参数：amount (订单金额，元)
  * 返回：当前用户已领取且可用的优惠券（过滤掉已过期/不满足门槛的）
  */
-Mock.mock(/\/coupons\/available/, 'get', (options: any) => {
+Mock.mock(/\/coupons\/available/, 'get', (options: MockOptionsWithHeaders) => {
   const collectedIds = getCollectedCouponIds(options)
 
   // 解析 URL 参数中的 amount
@@ -494,7 +491,7 @@ Mock.mock(/\/coupons\/available/, 'get', (options: any) => {
  * 参数：{ id: number }
  * 返回：领取结果
  */
-Mock.mock(/\/coupons\/collect/, 'post', (options: any) => {
+Mock.mock(/\/coupons\/collect/, 'post', (options: MockOptionsWithHeaders) => {
   const body = JSON.parse(options.body || '{}')
   const userId = getUserIdFromToken(options)
 
@@ -529,7 +526,7 @@ Mock.mock(/\/coupons\/collect/, 'post', (options: any) => {
  * GET /coupons/my — 获取我的优惠券（已领取的）
  * 返回：当前用户已领取的所有优惠券
  */
-Mock.mock(/\/coupons\/my/, 'get', (options: any) => {
+Mock.mock(/\/coupons\/my/, 'get', (options: MockOptionsWithHeaders) => {
   const collectedIds = getCollectedCouponIds(options)
   const myCoupons = allCoupons.filter(c => collectedIds.includes(c.id))
   return {
@@ -544,7 +541,7 @@ Mock.mock(/\/coupons\/my/, 'get', (options: any) => {
  * 参数：{ id: number, orderId: string }
  * 返回：使用结果
  */
-Mock.mock(/\/coupons\/use/, 'post', (options: any) => {
+Mock.mock(/\/coupons\/use/, 'post', (options: MockOptionsWithHeaders) => {
   const body = JSON.parse(options.body || '{}')
   const userId = getUserIdFromToken(options)
 
@@ -567,7 +564,7 @@ Mock.mock(/\/coupons\/use/, 'post', (options: any) => {
  * POST /coupons/batch-collect — 批量领取优惠券
  * 参数：{ ids: number[] }
  */
-Mock.mock(/\/coupons\/batch-collect/, 'post', (options: any) => {
+Mock.mock(/\/coupons\/batch-collect/, 'post', (options: MockOptionsWithHeaders) => {
   const body = JSON.parse(options.body || '{}')
   const userId = getUserIdFromToken(options)
 

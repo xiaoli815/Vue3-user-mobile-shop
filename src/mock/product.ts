@@ -1,5 +1,7 @@
 import Mock from 'mockjs'
 import { faker } from '@faker-js/faker/locale/zh_CN'
+import type { MockOptions } from './index'
+import type { Product, Sku } from '../types/product'
 
 // ========== 真实商品数据 ==========
 // 商品名称池（按品类分，保证数据真实感）
@@ -325,10 +327,10 @@ function productImage(name: string, categoryIdOrWidth: number = 1, _height?: num
 }
 
 // 生成SKU
-function generateSkus(productId: number, basePrice: number, productName: string) {
+function generateSkus(productId: number, basePrice: number, productName: string): Sku[] {
   const colors = ['曜石黑', '珍珠白', '星空灰', '深海蓝', '樱粉金', '薄荷绿', '落日橙', '雾霾蓝']
   const sizes = ['XS', 'S', 'M', 'L', 'XL', '2XL']
-  const skus: any[] = []
+  const skus: Sku[] = []
   let id = productId * 1000
 
   const selectedColors = faker.helpers.arrayElements(colors, faker.number.int({ min: 2, max: 4 }))
@@ -345,7 +347,7 @@ function generateSkus(productId: number, basePrice: number, productName: string)
         ],
         price: Math.round(basePrice + faker.number.int({ min: -10, max: 30 })),
         stock: faker.number.int({ min: 0, max: 200 }),
-        image: productImage(productName) // 使用本地图片
+        image: productImage(productName)
       })
     })
   })
@@ -354,7 +356,7 @@ function generateSkus(productId: number, basePrice: number, productName: string)
 }
 
 // 生成30个真实感商品
-const productList: any[] = []
+const productList: Product[] = []
 
 // 循环生成30个商品数据
 for (let i = 1; i <= 30; i++) {
@@ -373,49 +375,35 @@ for (let i = 1; i <= 30; i++) {
 
   // 商品名称映射到图片  // 将生成的商品数据推入商品列表
   productList.push({
-    // 商品唯一标识
     id: i,
-    // 商品名称
     name,
-    // 商品描述（使用faker生成）
     desc: faker.commerce.productDescription(),
-    // 商品当前售价
     price,
-    // 商品原价（确保原价大于售价，否则按1.5倍计算）
     originalPrice: originalPrice > price ? originalPrice : Math.round(price * 1.2),
-    // 商品主图（传入categoryId确保正确分类）
     image: productImage(name, categoryId),
-    // 商品详情图数组（3-5张，尺寸750x750）
     images: Array.from({ length: faker.number.int({ min: 3, max: 5 }) }, () =>
       productImage(name, categoryId)
     ),
-    // 商品分类ID
     categoryId,
-    // 商品销量（26-15800随机）
     sales: faker.number.int({ min: 26, max: 15800 }),
-    // 商品库存（0-200随机）
     stock: faker.number.int({ min: 0, max: 200 }),
-    // 是否为限时秒杀商品（前4个商品）
     isFlashSale: i <= 4,
-    // 秒杀价格（前4个商品为原价的0.7-0.9倍，其他为0）
     flashSalePrice:
       i <= 4
         ? Math.round(price * faker.number.float({ min: 0.7, max: 0.9, fractionDigits: 1 }))
         : 0,
-    // 是否收藏（默认为false）
     isFavorite: false,
-    // 商品标签（随机选取1-3个）
     tags: faker.helpers.arrayElements(
       ['爆款', '新品', '限时特惠', '热卖', '品质优选', '店主推荐', '今日特价', '会员专享'],
       faker.number.int({ min: 1, max: 3 })
     ),
-    // 商品详情描述（3-6段随机文本）
-    detail: faker.lorem.paragraphs({ min: 3, max: 6 })
+    detail: faker.lorem.paragraphs({ min: 3, max: 6 }),
+    skus: []
   })
 }
 
 // 为每个商品生成SKU
-productList.forEach((p: any) => {
+productList.forEach((p: Product) => {
   p.skus = generateSkus(p.id, p.price, p.name)
 })
 
@@ -425,7 +413,7 @@ export { productList }
 // ========== Mock 接口 ==========
 
 // 商品列表接口（匹配 /api/products 及带参数的 /api/products?xxx）
-Mock.mock(/\/api\/products/, 'get', (options: any) => {
+Mock.mock(/\/api\/products/, 'get', (options: MockOptions) => {
   const url = new URL(options.url, 'http://localhost')
   const keyword = url.searchParams.get('keyword') || ''
   const categoryId = Number(url.searchParams.get('categoryId') || 0)
@@ -459,28 +447,25 @@ Mock.mock(/\/api\/products/, 'get', (options: any) => {
   return { code: 200, data: { list, total: list.length } }
 })
 
-// 商品详情接口
-Mock.mock(/\/api\/products\/\d+/, 'get', (options: any) => {
+Mock.mock(/\/api\/products\/\d+/, 'get', (options: MockOptions) => {
   const url = new URL(options.url, 'http://localhost')
   const id = Number(url.pathname.split('/').pop() || 1)
-  const product = productList.find((p: any) => p.id === id)
+  const product = productList.find((p) => p.id === id)
   return { code: 200, data: product || null }
 })
 
-// 收藏/取消收藏接口
-Mock.mock(/\/api\/products\/\d+\/favorite/, 'post', (options: any) => {
+Mock.mock(/\/api\/products\/\d+\/favorite/, 'post', (options: MockOptions) => {
   const url = new URL(options.url, 'http://localhost')
   const parts = url.pathname.split('/')
   const id = Number(parts[parts.length - 2] || 0)
-  const product = productList.find((p: any) => p.id === id)
+  const product = productList.find((p) => p.id === id)
   if (product) {
     product.isFavorite = !product.isFavorite
   }
   return { code: 200, data: product?.isFavorite }
 })
 
-// 收藏列表接口
 Mock.mock('/api/favorites', 'get', () => {
-  const favorites = productList.filter((p: any) => p.isFavorite)
+  const favorites = productList.filter((p) => p.isFavorite)
   return { code: 200, data: favorites }
 })

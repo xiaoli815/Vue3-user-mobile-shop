@@ -1,8 +1,20 @@
 import Mock from 'mockjs'
 import { productList } from './product'
+import type { MockOptions } from './index'
 
-// ========== 分类树数据 ==========
-const categoryTree = [
+interface CategoryChild {
+  id: number
+  name: string
+}
+
+interface CategoryItem {
+  id: number
+  name: string
+  icon: string
+  children: CategoryChild[]
+}
+
+const categoryTree: CategoryItem[] = [
   {
     id: 1,
     name: '手机数码',
@@ -125,7 +137,6 @@ const categoryTree = [
   }
 ]
 
-// 二级分类ID到一级分类ID的映射
 const subToParent: Record<number, number> = {}
 categoryTree.forEach(cat => {
   cat.children.forEach(child => {
@@ -133,15 +144,11 @@ categoryTree.forEach(cat => {
   })
 })
 
-// ========== Mock 接口 ==========
-
-// 获取分类树
 Mock.mock('/api/category/list', 'get', () => {
   return { code: 200, msg: 'success', data: categoryTree }
 })
 
-// 根据分类获取商品列表（分页）
-Mock.mock(/\/api\/category\/goods/, 'get', (options: any) => {
+Mock.mock(/\/api\/category\/goods/, 'get', (options: MockOptions) => {
   const url = new URL(options.url, 'http://localhost')
   const categoryId = Number(url.searchParams.get('categoryId') || 0)
   const page = Number(url.searchParams.get('page') || 1)
@@ -149,7 +156,6 @@ Mock.mock(/\/api\/category\/goods/, 'get', (options: any) => {
 
   let list = [...productList]
 
-  // 如果传的是二级分类ID，映射到一级分类ID
   const parentCategoryId = subToParent[categoryId] || categoryId
 
   if (parentCategoryId) {
