@@ -2,13 +2,14 @@ import Mock from 'mockjs'
 import type { MockOptions } from './index'
 import type { Order, OrderGoods } from '../types/order'
 import { CartItem } from '@/types'
+import { getItem, setItem } from './storage'
 
 const ORDER_STORAGE_KEY = 'order_list_anonymous'
 const COUNTER_STORAGE_KEY = 'order_id_counter'
 
 function getOrderList(): Order[] {
   try {
-    const data = localStorage.getItem(ORDER_STORAGE_KEY)
+    const data = getItem(ORDER_STORAGE_KEY)
     if (data) {
       return JSON.parse(data) as Order[]
     }
@@ -19,12 +20,12 @@ function getOrderList(): Order[] {
 }
 
 function saveOrderList(data: Order[]) {
-  localStorage.setItem(ORDER_STORAGE_KEY, JSON.stringify(data))
+  setItem(ORDER_STORAGE_KEY, JSON.stringify(data))
 }
 
 function getOrderIdCounter(): number {
   try {
-    const data = localStorage.getItem(COUNTER_STORAGE_KEY)
+    const data = getItem(COUNTER_STORAGE_KEY)
     if (data) {
       return parseInt(data, 10) || 1
     }
@@ -35,7 +36,7 @@ function getOrderIdCounter(): number {
 }
 
 function saveOrderIdCounter(value: number) {
-  localStorage.setItem(COUNTER_STORAGE_KEY, String(value))
+  setItem(COUNTER_STORAGE_KEY, String(value))
 }
 
 Mock.mock('/api/order/pre', 'post', (options: MockOptions) => {
@@ -43,7 +44,7 @@ Mock.mock('/api/order/pre', 'post', (options: MockOptions) => {
 
   let goodsList: OrderGoods[] = []
   try {
-    const cartData = localStorage.getItem('cart_items_anonymous')
+    const cartData = getItem('cart_items_anonymous')
     if (cartData) {
       const cartItems: CartItem[] = JSON.parse(cartData)
 

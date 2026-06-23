@@ -4,13 +4,10 @@ import App from './App.vue'
 import router from './router'
 import './style.css'
 
-
-// 仅开发环境且开启Mock时才加载Mock
-if (import.meta.env.DEV && import.meta.env.VITE_USE_MOCK === 'true') {
+if (import.meta.env.VITE_USE_MOCK === 'true') {
   import('./mock')
 }
 
-// 注册自定义指令
 import { registerLazyDirective } from './directives/lazy'
 
 const app = createApp(App)

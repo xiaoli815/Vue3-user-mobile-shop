@@ -13,11 +13,11 @@
         <span class="all-orders" @click="toOrderList()">全部订单 <van-icon name="arrow" /></span>
       </div>
       <van-grid :column-num="5" :border="false">
-        <van-grid-item icon="balance-o" :badge="orderStore.pendingPayCount" text="待付款" @click="toOrderList('pending_pay')" />
-        <van-grid-item icon="logistics" :badge="orderStore.paidCount" text="待发货" @click="toOrderList('paid')" />
-        <van-grid-item icon="send-gift-o" :badge="orderStore.shippedCount" text="待收货" @click="toOrderList('shipped')" />
-        <van-grid-item icon="comment-o" :badge="orderStore.completedCount" text="待评价" @click="toOrderList('completed')" />
-        <van-grid-item icon="after-sale" :badge="orderStore.refundCount" text="售后" @click="toOrderList('refund')" />
+        <van-grid-item icon="balance-o" :badge="orderStore.pendingPayCount===0? '' : orderStore.pendingPayCount" text="待付款" @click="toOrderList('pending_pay')" />
+        <van-grid-item icon="logistics" :badge="orderStore.paidCount===0? '' : orderStore.paidCount" text="待发货" @click="toOrderList('paid')" />
+        <van-grid-item icon="send-gift-o" :badge="orderStore.shippedCount===0? '' : orderStore.shippedCount" text="待收货" @click="toOrderList('shipped')" />
+        <van-grid-item icon="comment-o" :badge="orderStore.completedCount===0? '' : orderStore.completedCount" text="待评价" @click="toOrderList('completed')" />
+        <van-grid-item icon="after-sale" :badge="orderStore.refundCount === 0 ? '' : orderStore.refundCount" text="售后" @click="toOrderList('refund')" />
       </van-grid>
     </div>
 

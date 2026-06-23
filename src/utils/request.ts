@@ -27,8 +27,11 @@ interface UnwrappedAxiosInstance {
 
 const axiosInstance = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
-  // 超时 2s，避免长时间阻塞页面渲染
-  timeout: 2000
+  timeout: 2000,
+  headers: {
+    'X-Requested-With': 'XMLHttpRequest'
+  },
+  adapter: 'xhr'
 })
 
 axiosInstance.interceptors.request.use(

@@ -1,5 +1,5 @@
 import request from '@/utils/request'
-import type { ApiResponse, BannerListResponse, HomeDataResponse } from '@/types/index'
+import type { ApiResponse, BannerListResponse } from '@/types/index'
 import type { Product } from '@/types/product'
 
 export interface HotProductsResponse {

@@ -1,6 +1,7 @@
 import Mock from 'mockjs'
 import { getToken, removeToken as clearToken } from '@/utils/token'
 import type { MockOptions } from './index'
+import { getItem, setItem } from './storage'
 
 interface User {
   id: number
@@ -32,7 +33,7 @@ let tokenStore: Record<string, number> = {}
 
 const loadTokenStore = () => {
   try {
-    const data = localStorage.getItem(TOKEN_STORE_KEY)
+    const data = getItem(TOKEN_STORE_KEY)
     if (data) {
       tokenStore = JSON.parse(data)
     }
@@ -44,7 +45,7 @@ const loadTokenStore = () => {
 
 const saveTokenStore = () => {
   try {
-    localStorage.setItem(TOKEN_STORE_KEY, JSON.stringify(tokenStore))
+    setItem(TOKEN_STORE_KEY, JSON.stringify(tokenStore))
   } catch (e) {
     console.error('保存 tokenStore 失败:', e)
   }

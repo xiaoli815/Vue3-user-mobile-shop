@@ -1,6 +1,5 @@
 import Mock from 'mockjs'
 import { productList } from './product'
-import type { MockOptions } from './index'
 
 const banners = [
   { id: 1, imageUrl: '/images/banner1.jpg', link: '/product/list?category=1' },
@@ -17,7 +16,7 @@ Mock.mock('/api/home/banners', 'get', () => {
   }
 })
 
-Mock.mock(/\/api\/home\/hot/, 'get', (options: MockOptions) => {
+Mock.mock(/\/api\/home\/hot/, 'get', (options: { url: string }) => {
   const url = new URL(options.url, 'http://localhost')
   const page = Math.max(Number(url.searchParams.get('page')) || 1, 1)
   const pageSize = Math.min(Math.max(Number(url.searchParams.get('pageSize')) || 10, 1), 20)

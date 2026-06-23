@@ -1,1 +1,0 @@
-import{r as e}from"./request-BETsyR3e.js";const s=()=>e.get("/coupons/list").then(t=>t.data),c=t=>e.post("/coupons/collect",{id:t}).then(o=>o.data),r=t=>e.get(`/coupons/product/${t}`).then(o=>o.data);export{s as a,c,r as g};

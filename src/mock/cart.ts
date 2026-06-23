@@ -2,10 +2,27 @@ import Mock from 'mockjs'
 import type { CartItem } from '../types/cart'
 import type { MockOptions } from './index'
 
+const memoryStorage = new Map<string, string>()
+
+function getItem(key: string): string | null {
+  if (typeof window !== 'undefined' && window.localStorage) {
+    return localStorage.getItem(key)
+  }
+  return memoryStorage.get(key) || null
+}
+
+function setItem(key: string, value: string): void {
+  if (typeof window !== 'undefined' && window.localStorage) {
+    localStorage.setItem(key, value)
+  } else {
+    memoryStorage.set(key, value)
+  }
+}
+
 function getStorageKey(): string {
   try {
-    const token = localStorage.getItem('token')
-    const userId = localStorage.getItem('user_id')
+    const token = getItem('token')
+    const userId = getItem('user_id')
     if (token && userId) {
       return `cart_items_user_${userId}`
     }
@@ -17,7 +34,7 @@ function getStorageKey(): string {
 
 function getCartData(): CartItem[] {
   try {
-    const data = localStorage.getItem(getStorageKey())
+    const data = getItem(getStorageKey())
     if (data) {
       return JSON.parse(data) as CartItem[]
     }
@@ -28,7 +45,7 @@ function getCartData(): CartItem[] {
 }
 
 function saveCartData(data: CartItem[]) {
-  localStorage.setItem(getStorageKey(), JSON.stringify(data))
+  setItem(getStorageKey(), JSON.stringify(data))
 }
 
 Mock.mock('/api/cart', 'get', () => {

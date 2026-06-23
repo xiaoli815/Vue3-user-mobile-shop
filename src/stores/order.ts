@@ -72,11 +72,11 @@ export const useOrderStore = defineStore('order', () => {
     }
   }
   // 计算每个状态的订单数量
-  const pendingPayCount = computed(() => getOrdersByStatus('待_pay').length)
-  const paidCount = computed(() => getOrdersByStatus('待_send').length)
-  const shippedCount = computed(() => getOrdersByStatus('待_receive').length)
-  const completedCount = computed(() => getOrdersByStatus('待_comment').length)
-  const refundCount = computed(() => getOrdersByStatus('售后').length)
+  const pendingPayCount = computed(() => getOrdersByStatus('pending_pay').length)
+  const paidCount = computed(() => getOrdersByStatus('paid').length)
+  const shippedCount = computed(() => getOrdersByStatus('shipped').length)
+  const completedCount = computed(() => getOrdersByStatus('completed').length)
+  const refundCount = computed(() => getOrdersByStatus('refund').length)
 
   // 初始化
   loadOrdersFromStorage()

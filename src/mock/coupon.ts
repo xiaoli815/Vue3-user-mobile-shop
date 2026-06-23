@@ -1,7 +1,8 @@
 import Mock from 'mockjs'
 import { getToken } from '@/utils/token'
 import type { MockOptions } from './index'
-import type { Coupon } from '../types/coupon'
+
+import { getItem, setItem } from './storage'
 
 // ============================================================
 // 优惠券 Mock 数据生成规则
@@ -54,7 +55,7 @@ const formatExpireTime = (timestamp: number) => {
  */
 const getProductIdsByCategory = (categoryIndex: number): number[] => {
   const start = (categoryIndex - 1) * 25 + 1
-  const end = start + 24
+  // const end = start + 24
   return Array.from({ length: 25 }, (_, i) => start + i)
 }
 
@@ -353,7 +354,7 @@ let tokenStore: Record<string, number> = {}
 
 const loadTokenStore = () => {
   try {
-    const data = localStorage.getItem(TOKEN_STORE_KEY)
+    const data = getItem(TOKEN_STORE_KEY)
     if (data) {
       tokenStore = JSON.parse(data)
     }
@@ -363,13 +364,6 @@ const loadTokenStore = () => {
   }
 }
 
-const saveTokenStore = () => {
-  try {
-    localStorage.setItem(TOKEN_STORE_KEY, JSON.stringify(tokenStore))
-  } catch (e) {
-    console.error('保存 tokenStore 失败:', e)
-  }
-}
 
 loadTokenStore()
 
