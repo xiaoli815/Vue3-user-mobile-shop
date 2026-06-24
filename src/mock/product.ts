@@ -315,7 +315,7 @@ function productImage(name: string, categoryIdOrWidth: number = 1, _height?: num
   // 宽松匹配：检查名称是否包含关键字
   for (const [keyword, mapping] of Object.entries(categoryImages)) {
     if (name.includes(keyword)) {
-      return `/images/product/${mapping.category}/product${mapping.index}.jpg`
+      return `./images/product/${mapping.category}/product${mapping.index}.jpg`
     }
   }
 
@@ -323,7 +323,7 @@ function productImage(name: string, categoryIdOrWidth: number = 1, _height?: num
   const dir = categoryToDir[categoryId] || 'phone'
   // 使用名称的hash值生成一个1-15之间的索引
   const index = (name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % 15) + 1
-  return `/images/product/${dir}/product${index}.jpg`
+  return `./images/product/${dir}/product${index}.jpg`
 }
 
 // 生成SKU

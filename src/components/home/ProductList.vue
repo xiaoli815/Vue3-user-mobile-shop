@@ -20,7 +20,7 @@
 import { Product } from '@/types/index'
 import { PropType } from 'vue'
 
-const props = defineProps({
+ defineProps({
   productList: {
     type: Array as PropType<Product[]>,
     default: () => []

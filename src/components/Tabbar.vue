@@ -1,5 +1,5 @@
 <template>
-  <van-tabbar v-model="active" route safe-area-inset-bottom>
+  <van-tabbar v-model="active" route safe-area-inset-bottom class="fixed-tabbar">
     <van-tabbar-item icon="home-o" to="/home">首页</van-tabbar-item>
     <van-tabbar-item icon="search" to="/product/list">分类</van-tabbar-item>
     <van-tabbar-item icon="cart-o" :badge="cartCount" to="/cart">购物车</van-tabbar-item>
@@ -29,4 +29,12 @@ watch(
   { immediate: true }
 )
 </script>
-<style scoped></style>
+<style scoped>
+.fixed-tabbar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 999;
+}
+</style>

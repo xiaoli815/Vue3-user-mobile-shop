@@ -2,10 +2,10 @@ import Mock from 'mockjs'
 import { productList } from './product'
 
 const banners = [
-  { id: 1, imageUrl: '/images/banner1.jpg', link: '/product/list?category=1' },
-  { id: 2, imageUrl: '/images/banner2.jpg', link: '/product/list?category=2' },
-  { id: 3, imageUrl: '/images/banner3.jpg', link: '/product/list?category=3' },
-  { id: 4, imageUrl: '/images/banner4.jpg', link: '/flash' }
+  { id: 1, imageUrl: './images/banner1.jpg', link: '/product/list?category=1' },
+  { id: 2, imageUrl: './images/banner2.jpg', link: '/product/list?category=2' },
+  { id: 3, imageUrl: './images/banner3.jpg', link: '/product/list?category=3' },
+  { id: 4, imageUrl: './images/banner4.jpg', link: '/flash' }
 ]
 
 Mock.mock('/api/home/banners', 'get', () => {
