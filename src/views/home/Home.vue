@@ -626,4 +626,11 @@ const goSeckillDetail = (id: number) => {
   color: #ccc;
   font-size: 13px;
 }
+
+Tabbar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+}
 </style>
