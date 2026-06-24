@@ -1,8 +1,11 @@
 import Mock from 'mockjs'
 import type { Address } from '../types/address'
 import type { MockOptions } from './index'
+import { getItem, setItem } from './storage'
 
-const addressList: Address[] = [
+const ADDRESS_STORE_KEY = 'address_list_anonymous'
+
+const defaultAddresses: Address[] = [
   {
     id: 1,
     receiverName: '张三',
@@ -44,7 +47,37 @@ const addressList: Address[] = [
     isDefault: false
   }
 ]
+
+let addressList: Address[] = []
 let addressIdCounter = 5
+
+const loadAddresses = () => {
+  try {
+    const data = getItem(ADDRESS_STORE_KEY)
+    if (data) {
+      const parsed = JSON.parse(data)
+      if (Array.isArray(parsed)) {
+        addressList = parsed
+        const maxId = Math.max(...addressList.map(a => a.id), 4)
+        addressIdCounter = maxId + 1
+        return
+      }
+    }
+  } catch (e) {
+    console.error('加载地址列表失败:', e)
+  }
+  addressList = [...defaultAddresses]
+}
+
+const saveAddresses = () => {
+  try {
+    setItem(ADDRESS_STORE_KEY, JSON.stringify(addressList))
+  } catch (e) {
+    console.error('保存地址列表失败:', e)
+  }
+}
+
+loadAddresses()
 
 Mock.mock('/api/address/list', 'get', () => {
   return { code: 200, msg: 'success', data: addressList }
@@ -59,6 +92,7 @@ Mock.mock('/api/address/save', 'post', (options: MockOptions) => {
         addressList.forEach((a) => (a.isDefault = false))
       }
       addressList[idx] = { ...addressList[idx], ...body }
+      saveAddresses()
       return { code: 200, msg: '保存成功', data: addressList[idx] }
     }
     return { code: 404, msg: '地址不存在', data: null }
@@ -78,25 +112,30 @@ Mock.mock('/api/address/save', 'post', (options: MockOptions) => {
     addressList.forEach((a) => (a.isDefault = false))
   }
   addressList.push(newAddr)
+  saveAddresses()
   return { code: 200, msg: '添加成功', data: newAddr }
 })
 
-Mock.mock('/api/address/delete', 'post', (options: MockOptions) => {
-  const { id } = JSON.parse(options.body || '{}')
+Mock.mock('/api/address/delete', 'delete', (options: MockOptions) => {
+  const url = new URL(options.url, 'http://localhost')
+  const id = Number(url.searchParams.get('id'))
   const idx = addressList.findIndex((a) => a.id === id)
   if (idx > -1) {
     addressList.splice(idx, 1)
+    saveAddresses()
     return { code: 200, msg: '删除成功', data: null }
   }
   return { code: 404, msg: '地址不存在', data: null }
 })
 
-Mock.mock('/api/address/setDefault', 'post', (options: MockOptions) => {
-  const { id } = JSON.parse(options.body || '{}')
+Mock.mock(/\/api\/address\/setDefault\/\d+/, 'post', (options: MockOptions) => {
+  const match = options.url.match(/\/api\/address\/setDefault\/(\d+)/)
+  const id = match ? Number(match[1]) : 0
   addressList.forEach((a) => (a.isDefault = false))
   const addr = addressList.find((a) => a.id === id)
   if (addr) {
     addr.isDefault = true
+    saveAddresses()
     return { code: 200, msg: '设置成功', data: null }
   }
   return { code: 404, msg: '地址不存在', data: null }
