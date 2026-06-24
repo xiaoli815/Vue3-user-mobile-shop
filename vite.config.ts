@@ -4,6 +4,7 @@ import AutoImport from 'unplugin-auto-import/vite'
 import Components from 'unplugin-vue-components/vite'
 import { VantResolver } from 'unplugin-vue-components/resolvers'
 import { ViteImageOptimizer } from 'vite-plugin-image-optimizer'
+import { viteMockServe } from 'vite-plugin-mock'
 
 import { fileURLToPath } from 'url'
 import { resolve } from 'path'
@@ -35,6 +36,15 @@ export default defineConfig(({ mode }) => ({
         quality: 60,
         lossless: false
       }
+    }),
+    viteMockServe({
+      mockPath: 'src/mock',
+      localEnabled: true,
+      prodEnabled: true,
+      injectCode: `
+        import { setupProdMockServer } from '../mock/index'
+        setupProdMockServer()
+      `
     })
   ],
   resolve: {

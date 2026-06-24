@@ -22,4 +22,10 @@ export interface MockOptions {
   body?: string
 }
 
+export function setupProdMockServer() {
+  Mock.setup({
+    timeout: '50-150'
+  })
+}
+
 export default Mock
