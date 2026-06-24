@@ -316,11 +316,14 @@ const handleScroll = () => {
 }
 
 onMounted(() => {
-  fetchHotProducts()
-  fetchBanners()
-  fetchCategoryList()
-  fetchSeckillList()
-  // 监听滚动事件
+  Promise.all([
+    fetchHotProducts(),
+    fetchBanners(),
+    fetchCategoryList(),
+    fetchSeckillList()
+  ]).catch((e) => {
+    console.error('首页数据加载失败:', e)
+  })
   window.addEventListener('scroll', handleScroll)
 })
 

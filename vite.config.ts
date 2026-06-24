@@ -5,6 +5,7 @@ import Components from 'unplugin-vue-components/vite'
 import { VantResolver } from 'unplugin-vue-components/resolvers'
 import { ViteImageOptimizer } from 'vite-plugin-image-optimizer'
 import { viteMockServe } from 'vite-plugin-mock'
+import viteCompression from 'vite-plugin-compression'
 
 import { fileURLToPath } from 'url'
 import { resolve } from 'path'
@@ -23,19 +24,25 @@ export default defineConfig(({ mode }) => ({
     }),
     ViteImageOptimizer({
       jpg: {
-        quality: 75
+        quality: 70,
+        mozjpeg: true
       },
       png: {
-        quality: 75
+        quality: 70,
+        compressionLevel: 9
       },
       webp: {
-        quality: 75,
+        quality: 70,
         lossless: false
       },
       avif: {
-        quality: 60,
+        quality: 55,
         lossless: false
-      }
+      },
+      cache: true,
+      silent: true,
+      generateWebp: true,
+      generateAvif: false
     }),
     viteMockServe({
       mockPath: 'src/mock',
@@ -45,6 +52,12 @@ export default defineConfig(({ mode }) => ({
         import { setupProdMockServer } from '../mock/index'
         setupProdMockServer()
       `
+    }),
+    viteCompression({
+      algorithm: 'gzip',
+      threshold: 1024,
+      minRatio: 0.8,
+      deleteOriginalAssets: false
     })
   ],
   resolve: {
@@ -73,18 +86,29 @@ export default defineConfig(({ mode }) => ({
       'axios',
       'vant',
       '@vant/area-data'
-    ]
+    ],
+    exclude: ['mockjs']
   },
   build: {
     target: 'es2020',
     cssCodeSplit: true,
     assetsInlineLimit: 4096,
     chunkSizeWarningLimit: 500,
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        drop_console: mode === 'production',
+        drop_debugger: true
+      }
+    },
     rollupOptions: {
       output: {
         manualChunks: {
           vant: ['vant'],
-          axios: ['axios']
+          axios: ['axios'],
+          mock: ['mockjs'],
+          areaData: ['@vant/area-data'],
+          pinia: ['pinia', 'pinia-plugin-persistedstate']
         },
         chunkFileNames: 'assets/js/[name]-[hash:8].js',
         entryFileNames: 'assets/js/[name]-[hash:8].js',
