@@ -227,6 +227,8 @@ const handleCouponClick = (coupon: Coupon, index: number) => {
   if (couponTab.value !== 'available') return
   selectedIndex.value = index
   emit('select', coupon, index)
+  // 关闭弹窗
+  handleClose()
 }
 
 // 清除选择
